@@ -9,15 +9,6 @@
 #include <boost/shared_ptr.hpp>
 
 
-typedef std::vector<std::string> addresses_t;
-typedef std::map<std::string, addresses_t> consumers_t;
-
-typedef boost::shared_ptr<zmq::message_t> msg_ptr_t;
-typedef std::vector<msg_ptr_t> msg_pack_t;
-typedef std::map<std::string, std::deque<msg_pack_t> > pending_messages_t;
-
-consumers_t consumers;
-pending_messages_t pending;
 
 static void send_msg(zmq::socket_t& sock, const std::string& str, int flags = 0) {
     zmq::message_t msg(str.size());
@@ -32,6 +23,33 @@ static bool recv_msg(zmq::socket_t& sock, std::string& str, int flags = 0) {
         str.assign(static_cast<const char*>(msg.data()), msg.size());
     }
     return rc;
+}
+
+
+typedef std::vector<std::string> addresses_t;
+typedef std::map<std::string, addresses_t> consumers_t;
+
+typedef boost::shared_ptr<zmq::message_t> msg_ptr_t;
+typedef std::vector<msg_ptr_t> msg_pack_t;
+typedef std::map<std::string, std::deque<msg_pack_t> > pending_messages_t;
+
+consumers_t consumers;
+pending_messages_t pending;
+
+static bool send_msg_pack(zmq::socket_t& backend, const std::string& address, const msg_pack_t& messages) {
+    send_msg(backend, address, ZMQ_SNDMORE);
+    send_msg(backend, "", ZMQ_SNDMORE);
+    msg_pack_t::const_iterator next_message = messages.begin();
+    size_t left_to_send = messageaAs.size();
+    while(next_message != messages.end() && left_to_send > 1) {
+        msg_ptr_t msg_part = *next_message;
+        backend.send(*msg_part, ZMQ_SNDMORE);
+        left_to_send--;
+        ++next_message;
+    }
+    msg_ptr_t last_part = *next_message;
+    backend.send(*last_part);
+    return true;
 }
 
 // error prone version
