@@ -40,7 +40,7 @@ static bool send_msg_pack(zmq::socket_t& backend, const std::string& address, co
     send_msg(backend, address, ZMQ_SNDMORE);
     send_msg(backend, "", ZMQ_SNDMORE);
     msg_pack_t::const_iterator next_message = messages.begin();
-    size_t left_to_send = messageaAs.size();
+    size_t left_to_send = messages.size();
     while(next_message != messages.end() && left_to_send > 1) {
         msg_ptr_t msg_part = *next_message;
         backend.send(*msg_part, ZMQ_SNDMORE);
@@ -159,22 +159,15 @@ void broker_prototype_1() {
             if(consumer_addresses.empty()) {
                continue;
             }
-            // send to first address
-            std::string& address = consumer_addresses.at(0);
-            send_msg(backend, address, ZMQ_SNDMORE);
-            send_msg(backend, "", ZMQ_SNDMORE);
-            msg_pack_t& msg_pack = pending_messages.front();
-            msg_pack_t::iterator next_message = msg_pack.begin();
-            size_t left_to_send = msg_pack.size();
-            while(next_message != msg_pack.end() && left_to_send > 1) {
-                msg_ptr_t msg_part = *next_message;
-                backend.send(*msg_part, ZMQ_SNDMORE);
-                left_to_send--;
-                ++next_message;
+            // send pending messages to the first ready recipient
+            addresses_t::iterator next_address = consumer_addresses.begin();
+            for(;can_send(next_address, consumer_addresses, pending_messages); ++next_address) {
+                msg_pack_t& messages = pending_messages.front();
+                if(!send_msg_pack(backend, *next_address, messages)) {
+                    continue;
+                }
+                pending_messages.pop_front();
             }
-            msg_ptr_t last_part = *next_message;
-            backend.send(*last_part);
-            pending_messages.pop_front();
         }
     }
 }
