@@ -52,6 +52,10 @@ static bool send_msg_pack(zmq::socket_t& backend, const std::string& address, co
     return true;
 }
 
+static bool can_send(addresses_t::iterator& address, addresses_t& consumer_addresses, const std::deque<msg_pack_t>& pending_messages) {
+    return (address != consumer_addresses.end()) && !pending_messages.empty();
+}
+
 // error prone version
 void broker_prototype_1() {
     zmq::context_t ctx(1);
