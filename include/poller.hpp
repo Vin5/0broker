@@ -12,6 +12,8 @@ class poller_t {
     typedef std::vector<zmq::pollitem_t> pollitems_t;
 public:
 
+    poller_t() {
+    }
 
     void add(socket_t& sock);
     //void set_sockets(const socket_set_t& sock_set);

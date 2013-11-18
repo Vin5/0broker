@@ -5,6 +5,7 @@
 #include "context.hpp"
 #include "endpoint.hpp"
 
+#include <stdexcept>
 #include <set>
 
 #include <zmq.hpp>
@@ -15,6 +16,11 @@ namespace zbroker {
 
 class socket_t : zmq::socket_t {
 public:
+
+    using zmq::socket_t::operator void *;
+    using zmq::socket_t::recv;
+    using zmq::socket_t::send;
+
     socket_t(const context_t& ctx, int socket_type);
 
     void connect(const endpoint_t& endpoint);
@@ -68,7 +74,7 @@ public:
         return true;
     }
 
-    bool has_more() const;
+    bool has_more();
 
 private:
     int m_type;

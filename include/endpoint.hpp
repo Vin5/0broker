@@ -13,7 +13,11 @@ enum transport_type_e {
 
 class endpoint_t{
 public:
-    endpoint_t(transport_type_e transport, const std::string& address);
+    endpoint_t(transport_type_e transport, const std::string& address)
+        : m_transport(transport),
+          m_address(address)
+    {
+    }
 
     std::string connection_string() const;
 
