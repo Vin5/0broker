@@ -76,6 +76,12 @@ bool broker_t::handle_frontend(socket_t &frontend)  {
     } while (frontend.has_more());
 
     append_pending_messages(destination, std::move(msg_pack));
+
+    // acknowledgeme message
+    frontend.send(sender_address, ZMQ_SNDMORE);
+    frontend.send(std::string(), ZMQ_SNDMORE);
+    frontend.send(std::string("OK"));
+
     return true;
 }
 
