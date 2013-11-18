@@ -24,4 +24,6 @@ private:
     config_ptr_t m_config;
 };
 
+} // zbroker
+
 #endif // CONTEXT_HPP
