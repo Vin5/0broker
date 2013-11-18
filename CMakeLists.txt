@@ -24,10 +24,13 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 link_directories(${ZeroMQ_LIBRARY_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
+file(GLOB ZBROKER_INCLUDES
+    "include/*.hpp")
+
 file(GLOB ZBROKER_SOURCES
     "src/*.cpp")
 
-add_executable(zbroker ${ZBROKER_SOURCES})
+add_executable(zbroker ${ZBROKER_INCLUDES} ${ZBROKER_SOURCES})
 
 TARGET_LINK_LIBRARIES(zbroker ${ZeroMQ_LIBRARIES})
 TARGET_LINK_LIBRARIES(zbroker ${Boost_LIBRARIES})

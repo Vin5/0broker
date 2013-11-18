@@ -3,6 +3,7 @@
 
 namespace zmq {
     class context_t;
+    class socket_t;
 }
 
 namespace zbroker {

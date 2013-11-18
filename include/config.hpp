@@ -19,10 +19,10 @@ private:
 };
 
 namespace default_configuration {
-    static logger_type_e logger_type = STDOUT_LOGGER;
+    static logger_type_e logger_type = LT_STDOUT;
     static bool is_daemon = false;
 }
 
-}
+} // zbroker
 
 #endif // CONFIG_HPP
