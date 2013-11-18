@@ -7,12 +7,13 @@
 
 #include <set>
 
-#include <boost/noncopyable.hpp>
+#include <zmq.hpp>
+
 #include <boost/shared_ptr.hpp>
 
 namespace zbroker {
 
-class socket_t : boost::noncopyable {
+class socket_t : zmq::socket_t {
 public:
     socket_t(const context_t& ctx, int socket_type);
 
@@ -23,14 +24,14 @@ public:
     bool send(const T& message, size_t size, int flags = 0) {
         zmq::message_t msg(size);
         memcpy(msg.data(), &message, size);
-        return m_socket.send(msg, flags);
+        return zmq::socket_t::send(msg, flags);
     }
 
     template<class T>
     bool send(const T* message, size_t size, int flags = 0) {
         zmq::message_t msg(size);
         memcpy(msg.data(), message, size);
-        return m_socket.send(msg, flags);
+        return zmq::socket_t::send(msg, flags);
     }
 
     bool send(const std::string& message, int flags = 0) {
@@ -41,7 +42,7 @@ public:
     template<class T>
     bool recv(T& message, size_t size, int flags = 0) {
         zmq::message_t msg;
-        if(!m_socket.recv(&msg, flags)) {
+        if(!zmq::socket_t::recv(&msg, flags)) {
             return false;
         }
         if(size != msg.size()) {
@@ -60,24 +61,20 @@ public:
 
     bool recv(std::string& message, int flags = 0) {
         zmq::message_t msg;
-        if(!m_socket.recv(&msg, flags)) {
+        if(!zmq::socket_t::recv(&msg, flags)) {
             return false;
         }
         message.assign(static_cast<const char*>(msg.data()), msg.size());
         return true;
     }
 
-    operator void* () {
-        return m_socket;
-    }
+    bool has_more() const;
 
 private:
-    zmq::socket_t m_socket;
     int m_type;
 };
 
 typedef boost::shared_ptr<socket_t> socket_ptr_t;
-typedef std::set<socket_ptr_t> socket_set_t;
 
 } // zbroker
 

@@ -24,6 +24,8 @@ private:
     config_ptr_t m_config;
 };
 
+typedef boost::shared_ptr<context_t> context_ptr_t;
+
 } // zbroker
 
 #endif // CONTEXT_HPP

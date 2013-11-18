@@ -8,7 +8,11 @@
 #include <zmq.hpp>
 #include <boost/shared_ptr.hpp>
 
-
+#include "context.hpp"
+#include "socket.hpp"
+#include "poller.hpp"
+#include "endpoint.hpp"
+#include "stl_helpers.hpp"
 
 static void send_msg(zmq::socket_t& sock, const std::string& str, int flags = 0) {
     zmq::message_t msg(str.size());
@@ -170,6 +174,146 @@ void broker_prototype_1() {
             }
         }
     }
+}
+
+namespace zbroker {
+
+class broker_t {
+    typedef std::set<std::string> addresses_t;
+    typedef std::map<std::string, addresses_t> consumers_t;
+
+    typedef boost::shared_ptr<zmq::message_t> msg_ptr_t;
+    typedef std::vector<msg_ptr_t> msg_pack_t;
+    typedef std::map<std::string, std::deque<msg_pack_t> > pending_messages_t;
+
+public:
+    broker_t(const context_ptr_t& ctx)
+        : m_ctx(ctx)
+    {
+
+    }
+
+    void run() {
+        endpoint_t frontend_address(TT_IPC, "/tmp/frontend.ipc");
+        endpoint_t backend_address(TT_IPC, "/tmp/backend.ipc");
+
+
+        socket_t frontend(m_ctx, ZMQ_ROUTER);
+        frontend.bind(frontend_address);
+
+        socket_t backend(m_ctx, ZMQ_ROUTER);
+        backend.bind(backend_address);
+
+        const size_t FRONTEND = 0;
+        const size_t BACKEND = 1;
+
+        poller_t poller;
+
+        poller.add(frontend);
+        poller.add(backend);
+
+        while(true) {
+            const int TIMEOUT = 1000;
+            if(!poller.poll_in(TIMEOUT)) {
+                // LOG poll failed
+                break;
+            }
+            if(poller.check(FRONTEND, ZMQ_POLLIN)) {
+                if(!handle_frontend(frontend)) {
+                    break;
+                }
+            }
+            if(poller.check(BACKEND, ZMQ_POLLIN)) {
+                if(!handle_backend(backend)) {
+                    break;
+                }
+            }
+        }
+
+    }
+private:
+    bool handle_frontend(socket_t& frontend) {
+        std::string sender_address;
+        if(!frontend.recv(sender_address))
+            return false;
+
+        std::string empty_part;
+        if(!frontend.recv(empty_part))
+            return false;
+
+        std::string destination;
+        if(!frontend.recv(destination))
+            return false;
+
+        msg_pack_t msg_pack;
+        do {
+            msg_ptr_t msg(new zmq::message_t);
+            if(!frontend.recv(msg.get()))
+                return false;
+            msg_pack.push_back(msg);
+        } while (frontend.has_more());
+
+        append_pending_messages(destination, msg_pack);
+        return true;
+    }
+
+    void append_pending_messages(const std::string& destination, msg_pack_t&& messages) {
+        auto pending_messages_iterator = m_pending_messages.find(destination);
+        if(pending_messages_iterator != pending.end()) {
+            auto& pending_container = pending_messages_iterator->second;
+            pending_container.push_back(messages);
+        }
+        else {
+            std::deque<msg_pack_t> pending_container;
+            pending_container.push_back(messages);
+            m_pending_messages.insert(std::make_pair(destination, pending_container));
+        }
+    }
+
+    bool handle_backend(socket_t& backend) {
+        std::string consumer_address;
+        if(!backend.recv(consumer_address))
+            return false;
+
+        std::string empty_part;
+        if(!backend.recv(empty_part))
+            return false;
+
+        std::string destination;
+        if(!backend.recv(destination))
+            return false;
+
+        append_consumer(destination, consumer_address);
+        return true;
+    }
+
+    void append_consumer(const std::string& destination, const std::string& consumer_address) {
+        auto consumers_iterator = m_consumers.find(destination);
+        if(consumers_iterator == m_consumers.end()) {
+            addresses_t addresses;
+            addresses.push_back(consumer_address);
+            m_consumers.insert(std::make_pair(destination, addresses));
+        }
+        else {
+            addresses_t& addresses = consumers_iterator->second;
+            if(!stl::contains(addresses, consumer_address)){
+                addresses.push_back(receiver_address);
+            }
+        }
+    }
+
+    bool distribute_messages(socket_t& backend) {
+
+        return true;
+    }
+
+private:
+    zbroker::context_ptr_t m_ctx;
+
+    consumers_t m_consumers;
+    pending_messages_t m_pending_messages;
+};
+
 }
 
 int main(int argc, char* argv[]) {

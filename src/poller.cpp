@@ -7,6 +7,7 @@ void poller_t::add(socket_t &sock, ) {
     m_poll_items.push_back(item);
 }
 
+/*
 void poller_t::set_sockets(const socket_set_t &sock_set) {
     if(sock_set.empty()) {
         return;
@@ -23,7 +24,7 @@ void poller_t::set_sockets(const socket_set_t &sock_set) {
         items[i].events = ZMQ_POLLIN;
         items[i].revents = 0;
     }
-}
+}*/
 
 static bool is_data_ready(int type, zmq::pollitem_t& item) {
     if ((type & item.revents) != type) {
@@ -42,7 +43,7 @@ bool poller_t::poll_in(int timeout) {
 #else
     int rc = zmq_poll(&m_poll_items[0], poll_items.size(), timeout/1000); //millisec
 #endif
-    if (rc <= 0) {
+    if (rc < 0) {
         return false;
     }
 

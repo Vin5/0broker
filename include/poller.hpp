@@ -14,7 +14,7 @@ public:
 
 
     void add(socket_t& sock);
-    void set_sockets(const socket_set_t& sock_set);
+    //void set_sockets(const socket_set_t& sock_set);
 
     void clear();
 
