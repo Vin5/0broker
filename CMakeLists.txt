@@ -2,13 +2,17 @@ cmake_minimum_required(VERSION 2.6)
 
 project(0broker)
 
-SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
-set(CMAKE_CXX_FLAGS "-std=c++0x -pedantic")
+if(NOT CMAKE_BUILD_TYPE)
+        set(CMAKE_BUILD_TYPE "Debug")
+endif()
 
-IF(NOT CMAKE_BUILD_TYPE)
-        SET(CMAKE_BUILD_TYPE "Debug")
-ENDIF()
+add_definitions("-Wall -std=c++0x -pedantic")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_definitions("-D_DEBUG")
+endif()
+
 
 find_package(ZeroMQ REQUIRED)
 
@@ -32,5 +36,5 @@ file(GLOB ZBROKER_SOURCES
 
 add_executable(zbroker ${ZBROKER_INCLUDES} ${ZBROKER_SOURCES})
 
-TARGET_LINK_LIBRARIES(zbroker ${ZeroMQ_LIBRARIES})
-TARGET_LINK_LIBRARIES(zbroker ${Boost_LIBRARIES})
+target_link_libraries(zbroker ${ZeroMQ_LIBRARIES})
+target_link_libraries(zbroker ${Boost_LIBRARIES})

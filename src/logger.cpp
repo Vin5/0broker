@@ -23,11 +23,20 @@ log_message_t& log_message_t::operator=(const log_message_t& msg) {
     m_level = msg.m_level;
     m_logger = msg.m_logger;
     m_stream << msg.m_stream.str();
+    return *this;
 }
 
 log_message_t::~log_message_t() {
     try {
-        m_logger.log(*this);
+        switch(m_level) {
+        case LL_DEBUG:
+#ifndef _DEBUG
+            break; // log debug messages only in debug build mode
+#endif
+        default:
+            m_logger.log(*this);
+            break;
+        }
     }
     catch(...) { }
 }

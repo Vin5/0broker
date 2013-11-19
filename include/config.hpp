@@ -19,8 +19,8 @@ private:
 };
 
 namespace default_configuration {
-    static logger_type_e logger_type = LT_STDOUT;
-    static bool is_daemon = false;
+    static const logger_type_e logger_type = LT_STDOUT;
+    static const bool is_daemon = false;
 }
 
 } // zbroker
