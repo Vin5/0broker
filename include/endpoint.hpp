@@ -11,7 +11,7 @@ enum transport_type_e {
     TT_TCP
 };
 
-class endpoint_t{
+class endpoint_t {
 public:
     endpoint_t(transport_type_e transport, const std::string& address)
         : m_transport(transport),

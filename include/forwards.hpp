@@ -10,6 +10,7 @@ namespace zmq {
 namespace zbroker {
     class config_t;
     class socket_t;
+    class logger_t;
 }
 
 #endif // FORWARDS_HPP

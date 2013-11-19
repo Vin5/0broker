@@ -7,8 +7,6 @@
 #include <vector>
 #include <deque>
 
-
-#include "forwards.hpp"
 #include "context.hpp"
 
 namespace zbroker {
@@ -37,10 +35,13 @@ private:
     bool send_msg_pack(socket_t& backend, const std::string& address, const msg_pack_t& messages);
 
 private:
-    zbroker::context_ptr_t m_ctx;
+    context_ptr_t m_ctx;
 
     consumers_t m_consumers;
     pending_messages_t m_pending_messages;
+
+    broker_t(const broker_t&);
+    void operator=(const broker_t&);
 };
 
 }

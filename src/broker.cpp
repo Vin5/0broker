@@ -13,8 +13,11 @@ broker_t::broker_t(const context_ptr_t& ctx)
 }
 
 void broker_t::run() {
-    endpoint_t frontend_address(TT_IPC, "/tmp/frontend.ipc");
-    endpoint_t backend_address(TT_IPC, "/tmp/backend.ipc");
+    m_ctx->log(LL_INFO) << "broker started";
+   // endpoint_t frontend_address(TT_IPC, "/tmp/frontend.ipc");
+   // endpoint_t backend_address(TT_IPC, "/tmp/backend.ipc");
+    endpoint_t frontend_address(TT_TCP, "100.100.50.175:12345");
+    endpoint_t backend_address(TT_TCP, "100.100.50.175:12346");
 
 
     socket_t frontend(*m_ctx, ZMQ_ROUTER);
@@ -32,7 +35,7 @@ void broker_t::run() {
     poller.add(backend);
 
     while(true) {
-        const int TIMEOUT = 1000;
+        const int TIMEOUT = 1000*1000;
         if(!poller.poll_in(TIMEOUT)) {
             // LOG poll failed
             break;
@@ -77,7 +80,7 @@ bool broker_t::handle_frontend(socket_t &frontend)  {
 
     append_pending_messages(destination, std::move(msg_pack));
 
-    // acknowledgeme message
+    // acknowledgemt message
     frontend.send(sender_address, ZMQ_SNDMORE);
     frontend.send(std::string(), ZMQ_SNDMORE);
     frontend.send(std::string("OK"));
