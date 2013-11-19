@@ -23,6 +23,9 @@ public:
     log_message_t log(log_level_e level) const;
 
 private:
+    void setup_logger();
+
+private:
     zmq_context_ptr_t m_context;
     config_ptr_t m_config;
     logger_ptr_t m_logger;

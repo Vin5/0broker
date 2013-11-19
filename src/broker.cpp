@@ -13,47 +13,48 @@ broker_t::broker_t(const context_ptr_t& ctx)
 }
 
 void broker_t::run() {
-    m_ctx->log(LL_INFO) << "broker started";
-   // endpoint_t frontend_address(TT_IPC, "/tmp/frontend.ipc");
-   // endpoint_t backend_address(TT_IPC, "/tmp/backend.ipc");
-    endpoint_t frontend_address(TT_TCP, "100.100.50.175:12345");
-    endpoint_t backend_address(TT_TCP, "100.100.50.175:12346");
+    try {
+        endpoint_t frontend_address(TT_IPC, "/tmp/frontend.ipc");
+        endpoint_t backend_address(TT_IPC, "/tmp/backend.ipc");
 
+        socket_t frontend(*m_ctx, ZMQ_ROUTER);
+        frontend.bind(frontend_address);
 
-    socket_t frontend(*m_ctx, ZMQ_ROUTER);
-    frontend.bind(frontend_address);
+        socket_t backend(*m_ctx, ZMQ_ROUTER);
+        backend.bind(backend_address);
 
-    socket_t backend(*m_ctx, ZMQ_ROUTER);
-    backend.bind(backend_address);
+        const size_t FRONTEND = 0;
+        const size_t BACKEND = 1;
 
-    const size_t FRONTEND = 0;
-    const size_t BACKEND = 1;
+        poller_t poller;
 
-    poller_t poller;
+        poller.add(frontend);
+        poller.add(backend);
 
-    poller.add(frontend);
-    poller.add(backend);
-
-    while(true) {
-        const int TIMEOUT = 1000*1000;
-        if(!poller.poll_in(TIMEOUT)) {
-            // LOG poll failed
-            break;
-        }
-        if(poller.check(FRONTEND, ZMQ_POLLIN)) {
-            if(!handle_frontend(frontend)) {
+        while(true) {
+            const int TIMEOUT = 1000*1000;
+            if(!poller.poll_in(TIMEOUT)) {
+                // LOG poll failed
+                break;
+            }
+            if(poller.check(FRONTEND, ZMQ_POLLIN)) {
+                if(!handle_frontend(frontend)) {
+                    break;
+                }
+            }
+            if(poller.check(BACKEND, ZMQ_POLLIN)) {
+                if(!handle_backend(backend)) {
+                    break;
+                }
+            }
+            // detect pending messages and send them to receivers
+            if(!distribute_messages(backend)) {
                 break;
             }
         }
-        if(poller.check(BACKEND, ZMQ_POLLIN)) {
-            if(!handle_backend(backend)) {
-                break;
-            }
-        }
-        // detect pending messages and send them to receivers
-        if(!distribute_messages(backend)) {
-            break;
-        }
+    }
+    catch(const std::exception& e) {
+        m_ctx->log(LL_ERROR) << e.what();
     }
 }
 

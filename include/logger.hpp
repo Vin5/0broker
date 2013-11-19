@@ -9,7 +9,8 @@ namespace zbroker {
 enum logger_type_e {
     LT_STDOUT,
     LT_FILE,
-    LT_SYSLOG
+    LT_SYSLOG,
+    LT_EMPTY // disable logging
 };
 
 enum log_level_e {
@@ -60,8 +61,26 @@ private:
     std::stringstream m_stream;
 };
 
+// log to stdout
 class console_logger_t : public logger_t {
     void log(const log_message_t& msg);
+};
+
+// dummy
+class file_logger_t : public logger_t {
+    void log(const log_message_t& msg) {}
+};
+
+// dummy
+class syslog_logger_t : public logger_t {
+    void log(const log_message_t& msg) {}
+};
+
+// no logging
+class empty_logger_t : public logger_t {
+    void log(const log_message_t&) {
+        // intentionally left empty
+    }
 };
 
 } // zbroker
