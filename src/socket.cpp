@@ -1,4 +1,6 @@
 #include "socket.hpp"
+#include "context.hpp"
+#include "endpoint.hpp"
 
 namespace zbroker {
 

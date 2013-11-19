@@ -2,11 +2,8 @@
 #define SOCKET_HPP
 
 #include "forwards.hpp"
-#include "context.hpp"
-#include "endpoint.hpp"
 
 #include <stdexcept>
-#include <set>
 
 #include <zmq.hpp>
 

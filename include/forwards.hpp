@@ -8,9 +8,11 @@ namespace zmq {
 }
 
 namespace zbroker {
+    class context_t;
     class config_t;
     class socket_t;
     class logger_t;
+    class endpoint_t;
 }
 
 #endif // FORWARDS_HPP
