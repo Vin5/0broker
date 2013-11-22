@@ -8,11 +8,10 @@ if(NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-add_definitions("-Wall -std=c++0x -pedantic")
+add_definitions("-Wall -std=c++11 -pedantic")
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions("-D_DEBUG")
 endif()
-
 
 find_package(ZeroMQ REQUIRED)
 

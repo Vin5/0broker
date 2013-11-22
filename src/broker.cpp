@@ -32,7 +32,7 @@ void broker_t::run() {
         poller.add(backend);
 
         while(true) {
-            const int TIMEOUT = 1000*1000;
+            const int TIMEOUT = 10000;
             if(!poller.poll_in(TIMEOUT)) {
                 // LOG poll failed
                 break;
