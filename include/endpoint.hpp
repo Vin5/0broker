@@ -19,6 +19,13 @@ public:
     {
     }
 
+
+    endpoint_t(const endpoint_t& rhs);
+    endpoint_t(endpoint_t&& rhs);
+    endpoint_t& operator=(endpoint_t rhs);
+
+    void swap(endpoint_t& other);
+
     std::string connection_string() const;
 
 private:

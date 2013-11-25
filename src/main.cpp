@@ -6,12 +6,6 @@
 
 // error prone version
 static void broker_prototype_1() {
-    zbroker::message_pack_t pack;
-    pack.push("Hello");
-
-    std::string ms;
-    pack.pop(ms);
-
     zbroker::context_ptr_t ctx(new zbroker::context_t);
     zbroker::broker_t broker(ctx);
     broker.run();

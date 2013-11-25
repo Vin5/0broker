@@ -87,7 +87,7 @@ struct message_pack_traits<const char*> {
     static void unpack(char* dst, const zmq::message_t& src) = delete;
 };
 
-// implementation is the same as 'const char*'
+// implementation is the same as for 'const char*'
 template<>
 struct message_pack_traits<char*> : message_pack_traits<const char*> {
 
