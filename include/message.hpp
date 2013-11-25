@@ -84,7 +84,7 @@ struct message_pack_traits<const char*> {
         message_pack_traits<std::string>::pack(dst, src);
     }
 
-    // refuse unpacking to char array because it can cause an overflow
+    // refuse unpacking to char array in order to prevent an overflow
     static void unpack(type& dst, const zmq::message_t& src);
 };
 
@@ -93,11 +93,12 @@ struct message_pack_traits<char[N]> {
     static void pack(zmq::message_t& dst, const char src[N]) {
         zmq::message_t msg(N);
         memcpy(msg.data(), src, N);
-        msg.move(&dst);
+        dst.move(&msg);
     }
 
     static void unpack(char dst[N], const zmq::message_t& src) {
-        memcpy(dst, static_cast<const char*>(src.data()), N);
+        size_t min_size = src.size() > N ? N : src.size();
+        memcpy(dst, static_cast<const char*>(src.data()), min_size); // loss of data is possible
     }
 };
 
