@@ -69,7 +69,7 @@ struct message_pack_traits<std::string> {
     static void pack(zmq::message_t& dst, const std::string& src) {
         zmq::message_t msg(src.size());
         memcpy(msg.data(), src.data(), src.size());
-        msg.move(&dst);
+        dst.move(&msg);
     }
 
     static void unpack(std::string& dst, const zmq::message_t& src) {
@@ -79,14 +79,20 @@ struct message_pack_traits<std::string> {
 
 template<>
 struct message_pack_traits<const char*> {
-    typedef const char* type;
-    static void pack(zmq::message_t& dst, const type& src) {
+    static void pack(zmq::message_t& dst, const char* src) {
         message_pack_traits<std::string>::pack(dst, src);
     }
 
     // refuse unpacking to char array in order to prevent an overflow
-    static void unpack(type& dst, const zmq::message_t& src);
+    static void unpack(char* dst, const zmq::message_t& src) = delete;
 };
+
+// implementation is the same as 'const char*'
+template<>
+struct message_pack_traits<char*> : message_pack_traits<const char*> {
+
+};
+
 
 template<size_t N>
 struct message_pack_traits<char[N]> {
