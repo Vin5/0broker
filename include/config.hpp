@@ -25,7 +25,7 @@ private:
 };
 
 namespace default_configuration {
-    static const endpoint_t address(TT_IPC, "127.0.0.1:12345");
+    static const endpoint_t address(TT_IPC, "/tmp/backend.ipc");
     static const logger_type_e logger_type = LT_STDOUT;
     static const bool is_daemon = false;
 }
