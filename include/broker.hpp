@@ -61,20 +61,9 @@ private:
 
     service_ptr_t lookup_service(const std::string& name);
 
-   /* void append_pending_messages(const std::string& destination, msg_pack_t&& messages);
-
-    bool handle_backend(socket_t& backend);
-    void append_consumer(const std::string& destination, msg_ptr_t consumer_address);
-
-    bool distribute_messages(socket_t& backend);
-    bool send_msg_pack(socket_t& backend, const msg_ptr_t& address, const msg_pack_t& messages);*/
 
 private:
     context_ptr_t m_ctx;
-
-    //consumers_t m_consumers;
-    //pending_messages_t m_pending_messages;
-
 
     // socket for senders and recievers
     socket_ptr_t m_socket;

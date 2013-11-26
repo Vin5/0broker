@@ -6,12 +6,8 @@
 namespace zbroker {
 
 template<class T>
-struct message_traits;/* {
-    // appropriate specialization should be defined
-    static void pack(zmq::message_t& dst, const T& src) = delete;
-    static void unpack(T& dst, const zmq::message_t& src) = delete;
-    static bool equals(const zmq::message_t& msg, const T& data) = delete;
-};*/
+struct message_traits;
+
 
 template<>
 struct message_traits<std::string> {
