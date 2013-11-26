@@ -13,6 +13,7 @@ namespace zbroker {
     class socket_t;
     class logger_t;
     class endpoint_t;
+    class message_pack_t;
 }
 
 #endif // FORWARDS_HPP

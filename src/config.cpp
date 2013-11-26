@@ -10,7 +10,8 @@ namespace zbroker {
 config_t::config_t()
     : m_address(default_configuration::address),
       m_logger_type(default_configuration::logger_type),
-      m_is_daemon(default_configuration::is_daemon)
+      m_is_daemon(default_configuration::is_daemon),
+      m_heartbeat_interval(default_configuration::heartbeat_interval)
 {
 }
 
@@ -24,6 +25,10 @@ logger_type_e config_t::logger_type() const {
 
 bool config_t::is_daemon() const {
     return m_is_daemon;
+}
+
+size_t config_t::heartbeat_interval() const {
+    return m_heartbeat_interval;
 }
 
 }

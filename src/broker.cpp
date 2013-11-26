@@ -1,56 +1,50 @@
 #include "broker.hpp"
 
+#include "config.hpp"
 #include "socket.hpp"
 #include "poller.hpp"
 #include "endpoint.hpp"
 #include "stl_helpers.hpp"
+#include "message.hpp"
+
+#include <boost/make_shared.hpp>
+
+#define SENDER_HEADER "001"
+#define RECIEVER_HEADER "002"
 
 namespace zbroker {
 
 broker_t::broker_t(const context_ptr_t& ctx)
     : m_ctx(ctx)
 {
+    m_socket.reset(new socket_t(*m_ctx, ZMQ_ROUTER));
+    m_socket->bind(m_ctx->config()->address());
 }
 
 void broker_t::run() {
+    m_ctx->log(LL_INFO) << "Broker has started at " << m_ctx->config()->address();
     try {
-        endpoint_t frontend_address(TT_IPC, "/tmp/frontend.ipc");
-        endpoint_t backend_address(TT_IPC, "/tmp/backend.ipc");
-
-        socket_t frontend(*m_ctx, ZMQ_ROUTER);
-        frontend.bind(frontend_address);
-
-        socket_t backend(*m_ctx, ZMQ_ROUTER);
-        backend.bind(backend_address);
-
-        const size_t FRONTEND = 0;
-        const size_t BACKEND = 1;
+        const size_t BROKER_SOCKET = 0;
+        const size_t HEARTBEAT_INTERVAL = m_ctx->config()->heartbeat_interval();
 
         poller_t poller;
-
-        poller.add(frontend);
-        poller.add(backend);
+        poller.add(*m_socket);
 
         while(true) {
-            const int TIMEOUT = 10000;
-            if(!poller.poll_in(TIMEOUT)) {
+
+            if(!poller.poll_in(HEARTBEAT_INTERVAL)) {
                 // LOG poll failed
                 break;
             }
-            if(poller.check(FRONTEND, ZMQ_POLLIN)) {
-                if(!handle_frontend(frontend)) {
-                    break;
-                }
-            }
-            if(poller.check(BACKEND, ZMQ_POLLIN)) {
-                if(!handle_backend(backend)) {
+            if(poller.check(BROKER_SOCKET, ZMQ_POLLIN)) {
+                if(!handle_request()) {
                     break;
                 }
             }
             // detect pending messages and send them to receivers
-            if(!distribute_messages(backend)) {
+            /*if(!distribute_messages(backend)) {
                 break;
-            }
+            }*/
         }
     }
     catch(const std::exception& e) {
@@ -58,37 +52,74 @@ void broker_t::run() {
     }
 }
 
-bool broker_t::handle_frontend(socket_t &frontend)  {
-    std::string sender_address;
-    if(!frontend.recv(sender_address))
+bool broker_t::handle_request()  {
+    zmq::message_t sender;
+    if(!m_socket->recv(&sender))
         return false;
 
-    std::string empty_part;
-    if(!frontend.recv(empty_part))
+    zmq::message_t empty_part;
+    if(!m_socket->recv(&empty_part))
         return false;
 
-    std::string destination;
-    if(!frontend.recv(destination))
+    zmq::message_t header;
+    if(!m_socket->recv(&header))
         return false;
 
-    msg_pack_t msg_pack;
-    do {
-        msg_ptr_t msg(new zmq::message_t);
-        if(!frontend.recv(msg.get()))
-            return false;
-        msg_pack.push_back(msg);
-    } while (frontend.has_more());
+    if(message::equal_to(header, SENDER_HEADER)) {
+        handle_sender(sender);
+    }
+    else if(message::equal_to(header, RECIEVER_HEADER)) {
+        handle_reciever(sender);
+    }
+    else {
+        // acknowledgement message
+        m_socket->send(sender, ZMQ_SNDMORE);
+        m_socket->send(empty_part, ZMQ_SNDMORE);
+        m_socket->send("501");
+        m_ctx->log(LL_WARNING) << "Recieved malformed message";
+    }
 
-    append_pending_messages(destination, std::move(msg_pack));
 
-    // acknowledgemt message
-    frontend.send(sender_address, ZMQ_SNDMORE);
-    frontend.send(std::string(), ZMQ_SNDMORE);
-    frontend.send(std::string("OK"));
+
+    //append_pending_messages("test", std::move(msg_pack));
+
+
 
     return true;
 }
 
+bool broker_t::handle_sender(zmq::message_t& sender) {
+    zmq::message_t service_part;
+    if(!m_socket->recv(&service_part))
+        return false;
+
+    std::string service_name;
+    message::unpack(service_name, service_part);
+    service_ptr_t service = lookup_service(service_name);
+
+    // recieve message payload
+    message_pack_t payload;
+    if(!m_socket->recv(payload))
+        return false;
+
+    service->dispatch(m_socket, std::move(payload));
+    return true;
+}
+
+bool broker_t::handle_reciever(zmq::message_t &reciever) {
+    return false;
+}
+
+broker_t::service_ptr_t broker_t::lookup_service(const std::string &name) {
+    auto service_iterator = m_services.find(name);
+    if(service_iterator == m_services.end()) {
+        service_ptr_t service = boost::make_shared<service_t>(name);
+        m_services.insert(std::make_pair(name, service));
+        return service;
+    }
+    return service_iterator->second;
+}
+/*
 void broker_t::append_pending_messages(const std::string& destination, msg_pack_t&& messages) {
     auto pending_messages_iterator = m_pending_messages.find(destination);
     if(pending_messages_iterator != m_pending_messages.end()) {
@@ -96,15 +127,15 @@ void broker_t::append_pending_messages(const std::string& destination, msg_pack_
         pending_container.push_back(messages);
     }
     else {
-        std::deque<msg_pack_t> pending_container;
+        std::list<msg_pack_t> pending_container;
         pending_container.push_back(messages);
         m_pending_messages.insert(std::make_pair(destination, pending_container));
     }
 }
 
 bool broker_t::handle_backend(socket_t& backend) {
-    std::string consumer_address;
-    if(!backend.recv(consumer_address))
+    msg_ptr_t consumer_address(new zmq::message_t);
+    if(!backend.recv(consumer_address.get()))
         return false;
 
     std::string empty_part;
@@ -119,7 +150,7 @@ bool broker_t::handle_backend(socket_t& backend) {
     return true;
 }
 
-void broker_t::append_consumer(const std::string& destination, std::string&& consumer_address) {
+void broker_t::append_consumer(const std::string& destination, msg_ptr_t consumer_address) {
     auto consumers_iterator = m_consumers.find(destination);
     if(consumers_iterator == m_consumers.end()) {
         addresses_t addresses;
@@ -169,8 +200,8 @@ bool broker_t::distribute_messages(socket_t& backend) {
     return true;
 }
 
-bool broker_t::send_msg_pack(socket_t &backend, const std::string &address, const broker_t::msg_pack_t &messages) {
-    backend.send(address, ZMQ_SNDMORE);
+bool broker_t::send_msg_pack(socket_t &backend, const msg_ptr_t &address, const broker_t::msg_pack_t &messages) {
+    backend.send(*address, ZMQ_SNDMORE);
     backend.send(std::string(), ZMQ_SNDMORE);
 
     msg_pack_t::const_iterator next_message = messages.begin();
@@ -184,6 +215,23 @@ bool broker_t::send_msg_pack(socket_t &backend, const std::string &address, cons
     msg_ptr_t last_part = *next_message;
     backend.send(*last_part);
     return true;
+}*/
+
+void broker_t::service_t::dispatch(const socket_ptr_t &backend, message_pack_t&& msg) {
+    messages.push_back(msg);
+
+    while(!messages.empty() && !waiting.empty()) {
+        broker_t::recipient_t& recipient = waiting.front();
+        message_pack_t& message = messages.front();
+
+        backend->send(*recipient.identity);
+        backend->send("");
+        backend->send(message);
+
+
+        waiting.pop_front();
+        messages.pop_front();
+    }
 }
 
 

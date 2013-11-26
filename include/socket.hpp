@@ -2,79 +2,58 @@
 #define SOCKET_HPP
 
 #include "forwards.hpp"
+#include "msg_traits.hpp"
 
 #include <stdexcept>
-
-#include <zmq.hpp>
-
 #include <boost/shared_ptr.hpp>
 
 namespace zbroker {
 
-class socket_t : zmq::socket_t {
+class socket_t {
 public:
-
-    using zmq::socket_t::operator void *;
-    using zmq::socket_t::recv;
-    using zmq::socket_t::send;
 
     socket_t(const context_t& ctx, int socket_type);
 
     void connect(const endpoint_t& endpoint);
     void bind(const endpoint_t& endpoint);
 
-    template<class T>
-    bool send(const T& message, size_t size, int flags = 0) {
-        zmq::message_t msg(size);
-        memcpy(msg.data(), &message, size);
-        return zmq::socket_t::send(msg, flags);
-    }
+    bool send (zmq::message_t &msg, int flags = 0);
+    bool send (message_pack_t &msg, int flags = 0);
 
     template<class T>
-    bool send(const T* message, size_t size, int flags = 0) {
-        zmq::message_t msg(size);
-        memcpy(msg.data(), message, size);
-        return zmq::socket_t::send(msg, flags);
+    inline bool send(const T& data, int flags = 0) {
+        zmq::message_t message;
+        message_traits<T>::pack(message, data);
+        return send(message, flags);
     }
 
-    bool send(const std::string& message, int flags = 0) {
-        return send(message.data(), message.size(), flags);
-    }
-
+    bool recv (zmq::message_t *msg, int flags = 0);
+    bool recv (message_pack_t& msg, int flags = 0);
 
     template<class T>
-    bool recv(T& message, size_t size, int flags = 0) {
-        zmq::message_t msg;
-        if(!zmq::socket_t::recv(&msg, flags)) {
+    inline bool recv(T& data, int flags = 0) {
+        zmq::message_t message;
+        if(!recv(&message, flags)) {
             return false;
         }
-        if(size != msg.size()) {
-            std::string err = "Message size is not equal to destination object size";
-            throw std::runtime_error(err);
-        }
-        memcpy(&message, msg.data(), size);
+        message_traits<T>::unpack(data, message);
         return true;
     }
 
-    template<class T>
-    bool recv(T* message, size_t size, int flags = 0) {
-        assert(message);
-        return recv(*message, size, flags);
-    }
 
-    bool recv(std::string& message, int flags = 0) {
-        zmq::message_t msg;
-        if(!zmq::socket_t::recv(&msg, flags)) {
-            return false;
-        }
-        message.assign(static_cast<const char*>(msg.data()), msg.size());
-        return true;
-    }
 
     bool has_more();
 
+    inline operator void*() {
+        return m_socket;
+    }
+
 private:
+    zmq::socket_t m_socket;
     int m_type;
+
+    socket_t(socket_t&);
+    void operator=(socket_t&);
 };
 
 typedef boost::shared_ptr<socket_t> socket_ptr_t;

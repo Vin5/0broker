@@ -18,16 +18,20 @@ public:
 
     bool is_daemon() const;
 
+    size_t heartbeat_interval() const;
+
 private:
     endpoint_t m_address;
     logger_type_e m_logger_type;
     bool m_is_daemon;
+    size_t m_heartbeat_interval;
 };
 
 namespace default_configuration {
     static const endpoint_t address(TT_IPC, "/tmp/backend.ipc");
     static const logger_type_e logger_type = LT_STDOUT;
     static const bool is_daemon = false;
+    static const size_t heartbeat_interval = 3000; // msec
 }
 
 } // zbroker

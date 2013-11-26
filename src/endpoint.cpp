@@ -53,4 +53,9 @@ endpoint_t& endpoint_t::operator =(endpoint_t rhs) {
     return *this;
 }
 
+std::ostream& operator << (std::ostream& os, const endpoint_t& ep) {
+    os << ep.connection_string();
+    return os;
+}
+
 }

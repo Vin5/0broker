@@ -19,7 +19,6 @@ public:
     {
     }
 
-
     endpoint_t(const endpoint_t& rhs);
     endpoint_t(endpoint_t&& rhs);
     endpoint_t& operator=(endpoint_t rhs);
@@ -32,6 +31,8 @@ private:
     transport_type_e m_transport;
     std::string m_address;
 };
+
+std::ostream& operator << (std::ostream& os, const endpoint_t& ep);
 
 } // zbroker
 
