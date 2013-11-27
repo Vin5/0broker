@@ -33,16 +33,14 @@ static bool is_data_ready(int type, zmq::pollitem_t& item) {
     return true;
 }
 
+
 bool poller_t::poll_in(int timeout) {
     if(m_poll_items.empty()) {
         return false;
     }
 
-#if ZMQ_VERSION_MAJOR < 3
-    int rc = zmq_poll(&m_poll_items[0], m_poll_items.size(), timeout); // microsec
-#else
-    int rc = zmq_poll(&m_poll_items[0], m_poll_items.size(), timeout/1000); //millisec
-#endif
+    int rc = zmq_poll(&m_poll_items[0], m_poll_items.size(), timeout); // msec
+
     if (rc < 0) {
         return false;
     }

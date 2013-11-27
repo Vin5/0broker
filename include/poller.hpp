@@ -20,6 +20,7 @@ public:
 
     void clear();
 
+    // returns false in case of error or interruption
     bool poll_in(int timeout);
     bool check(size_t item_index, int flag);
 

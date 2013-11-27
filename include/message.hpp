@@ -2,8 +2,8 @@
 #define MESSAGE_HPP
 
 #include <vector>
-#include <boost/shared_ptr.hpp>
 
+#include "forwards.hpp"
 #include "msg_traits.hpp"
 
 namespace zbroker {
@@ -27,13 +27,11 @@ namespace message {
 
 }
 
-typedef boost::shared_ptr<zmq::message_t> message_part_t;
-
 class message_pack_t {
 public:
 
     message_pack_t() {
-
+        m_parts.reserve(100);
     }
 
     template<class T>
@@ -59,6 +57,10 @@ public:
         message_part_t part(new zmq::message_t);
         message::pack(*part, data);
         m_parts.push_back(part);
+    }
+
+    message_part_t& operator[](size_t index) {
+        return m_parts.at(index);
     }
 
     size_t size() const {

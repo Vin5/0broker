@@ -1,14 +1,11 @@
 #include "broker.hpp"
-
+#include "context.hpp"
 #include "config.hpp"
 #include "socket.hpp"
 #include "poller.hpp"
 #include "endpoint.hpp"
 #include "stl_helpers.hpp"
 #include "message.hpp"
-
-#include <boost/make_shared.hpp>
-
 
 namespace codes {
     namespace header {
@@ -33,7 +30,8 @@ namespace codes {
 namespace zbroker {
 
 broker_t::broker_t(const context_ptr_t& ctx)
-    : m_ctx(ctx)
+    : m_ctx(ctx),
+      m_interrupted(false)
 {
     m_socket.reset(new socket_t(*m_ctx, ZMQ_ROUTER));
     m_socket->bind(m_ctx->config()->address());
@@ -49,9 +47,8 @@ void broker_t::run() {
         poller.add(*m_socket);
 
         while(true) {
-
             if(!poller.poll_in(HEARTBEAT_INTERVAL)) {
-                // LOG poll failed
+                // interrupted or an error occured
                 break;
             }
             if(poller.check(BROKER_SOCKET, ZMQ_POLLIN)) {
@@ -59,16 +56,24 @@ void broker_t::run() {
                     break;
                 }
             }
-            // detect pending messages and send them to receivers
-            /*if(!distribute_messages(backend)) {
-                break;
-            }*/
+        }
+        if(m_interrupted) {
+            m_ctx->log(LL_INFO) << "Broker has been interrupted by a signal. Stop serving.";
         }
     }
     catch(const std::exception& e) {
         m_ctx->log(LL_ERROR) << e.what();
     }
 }
+
+void broker_t::interrupt() {
+    m_interrupted = true;
+}
+
+static std::string code201 = "201";
+static std::string code404 = "404";
+static std::string code501 = "501";
+
 
 bool broker_t::handle_request()  {
     zmq::message_t sender;
@@ -83,44 +88,42 @@ bool broker_t::handle_request()  {
     if(!m_socket->recv(&header))
         return false;
 
-    const char* status_code;
+    std::string* status_code;
 
     if(message::equal_to(header, codes::header::sender)) {
         if(!handle_sender(sender)) {
-            status_code = "201";
+            status_code = &code201;
         }
         else {
-            status_code = "404";
+            status_code = &code404;
         }
     }
     else if(message::equal_to(header, codes::header::reciever)) {
         if(!handle_reciever(sender)) {
-            status_code = "201";
+            status_code = &code201;
         }
         else {
-            status_code = "404";
+            status_code = &code404;
         }
     }
     else {
         m_ctx->log(LL_WARNING) << "Recieved malformed message";
-        status_code = "501";
+        status_code = &code501;
     }
 
     // acknowledgement message
     m_socket->send(sender, ZMQ_SNDMORE);
     m_socket->send(empty_part, ZMQ_SNDMORE);
-    m_socket->send(status_code);
+    m_socket->send(*status_code);
 
     return true;
 }
 
 bool broker_t::handle_sender(zmq::message_t& sender) {
-    zmq::message_t service_part;
-    if(!m_socket->recv(&service_part))
+    std::string service_name;
+    if(!m_socket->recv(service_name))
         return false;
 
-    std::string service_name;
-    message::unpack(service_name, service_part);
     service_ptr_t service = lookup_service(service_name);
 
     // recieve message payload
@@ -150,7 +153,7 @@ void broker_t::service_t::dispatch(const socket_ptr_t &backend, message_pack_t&&
     messages.push_back(msg);
 
     while(!messages.empty() && !waiting.empty()) {
-        broker_t::recipient_t& recipient = waiting.front();
+        broker_t::recipient_t recipient = waiting.front();
         message_pack_t& message = messages.front();
 
         backend->send(*recipient.identity);

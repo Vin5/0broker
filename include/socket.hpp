@@ -4,9 +4,6 @@
 #include "forwards.hpp"
 #include "msg_traits.hpp"
 
-#include <stdexcept>
-#include <boost/shared_ptr.hpp>
-
 namespace zbroker {
 
 class socket_t {
@@ -56,7 +53,7 @@ private:
     void operator=(socket_t&);
 };
 
-typedef boost::shared_ptr<socket_t> socket_ptr_t;
+
 
 } // zbroker
 

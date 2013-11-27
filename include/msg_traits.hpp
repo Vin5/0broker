@@ -59,7 +59,7 @@ struct message_traits<char[N]> {
 
     static void unpack(char dst[N], const zmq::message_t& src) {
         size_t min_size = src.size() > N ? N : src.size();
-        memcpy(dst, static_cast<const char*>(src.data()), min_size); // loss of data is possible
+        memcpy(dst, static_cast<const char*>(src.data()), min_size); // loss of data is possible, think twice before using
     }
 
     static bool equals(const zmq::message_t& msg, const char data[N]) {

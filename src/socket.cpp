@@ -3,8 +3,6 @@
 #include "endpoint.hpp"
 #include "message.hpp"
 
-#include <boost/make_shared.hpp>
-
 namespace zbroker {
 
 socket_t::socket_t(const context_t &ctx, int socket_type)
@@ -30,12 +28,17 @@ bool socket_t::recv(zmq::message_t *msg, int flags) {
 }
 
 bool socket_t::send(message_pack_t &msg, int flags) {
-    while(msg.size() != 1) {
-        message_part_t part = msg.pop();
+    if(msg.empty()) {
+        return false;
+    }
+    size_t msg_size = msg.size();
+    size_t i = 0;
+    while((msg_size - i) != 1) {
+        message_part_t& part = msg[i++];
         if(send(*part, ZMQ_SNDMORE | flags))
             return false;
     }
-    message_part_t part = msg.pop();
+    message_part_t& part = msg[i];
     return send(*part, flags);
 }
 

@@ -1,11 +1,23 @@
 #include "config.hpp"
 
+#include <zmq.h>
 
+#if ZMQ_VERSION_MAJOR == 4
+#define ZMQ_POLL_MSEC    1           //  zmq_poll is msec
+
+#elif ZMQ_VERSION_MAJOR == 3
+#define ZMQ_POLL_MSEC    1           //  zmq_poll is msec
+
+#elif ZMQ_VERSION_MAJOR == 2
+#define ZMQ_POLL_MSEC    1000        //  zmq_poll is usec
+
+#else
+#error 0mq version is not supported
+
+#endif
 
 
 namespace zbroker {
-
-
 
 config_t::config_t()
     : m_address(default_configuration::address),
@@ -28,7 +40,7 @@ bool config_t::is_daemon() const {
 }
 
 size_t config_t::heartbeat_interval() const {
-    return m_heartbeat_interval;
+    return m_heartbeat_interval * ZMQ_POLL_MSEC;
 }
 
 }

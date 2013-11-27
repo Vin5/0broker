@@ -31,7 +31,7 @@ namespace default_configuration {
     static const endpoint_t address(TT_IPC, "/tmp/backend.ipc");
     static const logger_type_e logger_type = LT_STDOUT;
     static const bool is_daemon = false;
-    static const size_t heartbeat_interval = 3000; // msec
+    static const size_t heartbeat_interval = 2500; // msec
 }
 
 } // zbroker

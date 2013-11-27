@@ -4,9 +4,6 @@
 #include "forwards.hpp"
 #include "logger.hpp"
 
-#include <boost/shared_ptr.hpp>
-
-
 namespace zbroker {
 
 class context_t {
