@@ -45,15 +45,9 @@ int main(int argc, char* argv[]) {
     signal_handler_t handler(broker);
     if(!handler.setup()) {
         std::cout << "Signals setting up is failed" << std::endl;
-    }
-
-    try {
-        broker.run();
-    }
-    catch(std::exception& e) {
-        ctx->log(zbroker::LL_ERROR) << e.what();
         return EXIT_FAILURE;
     }
 
+    broker.run();
     return EXIT_SUCCESS;
 }

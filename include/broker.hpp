@@ -52,7 +52,7 @@ public:
 private:
     bool handle_request();
     bool handle_sender(zmq::message_t &sender);
-    bool handle_reciever(zmq::message_t &reciever);
+    bool handle_receiver(zmq::message_t &reciever);
 
     service_ptr_t lookup_service(const std::string& name);
 

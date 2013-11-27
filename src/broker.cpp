@@ -10,7 +10,7 @@
 namespace codes {
     namespace header {
         static const char* const sender =   "001";
-        static const char* const reciever = "002";
+        static const char* const receiver = "002";
     }
 
     namespace control {
@@ -87,7 +87,7 @@ bool broker_t::handle_request()  {
         if(!handle_sender(sender))
             return false;
     }
-    else if(message::equal_to(header, codes::header::reciever)) {
+    else if(message::equal_to(header, codes::header::receiver)) {
         if(!handle_receiver(sender))
             return false;
     }

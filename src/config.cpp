@@ -23,7 +23,8 @@ config_t::config_t()
     : m_address(default_configuration::address),
       m_logger_type(default_configuration::logger_type),
       m_is_daemon(default_configuration::is_daemon),
-      m_heartbeat_interval(default_configuration::heartbeat_interval)
+      m_heartbeat_interval(default_configuration::heartbeat_interval),
+      m_liveness(default_configuration::heartbeat_liveness)
 {
 }
 
@@ -41,6 +42,10 @@ bool config_t::is_daemon() const {
 
 size_t config_t::heartbeat_interval() const {
     return m_heartbeat_interval * ZMQ_POLL_MSEC;
+}
+
+size_t config_t::liveness() const {
+    return m_liveness;
 }
 
 }
