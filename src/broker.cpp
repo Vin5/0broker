@@ -70,15 +70,10 @@ void broker_t::interrupt() {
     m_interrupted = true;
 }
 
-static std::string code201 = "201";
-static std::string code404 = "404";
-static std::string code501 = "501";
-
-
 bool broker_t::handle_request()  {
     zmq::message_t sender;
     if(!m_socket->recv(&sender))
-        return false;
+        return false; // interrupted
 
     zmq::message_t empty_part;
     if(!m_socket->recv(&empty_part))
@@ -88,41 +83,24 @@ bool broker_t::handle_request()  {
     if(!m_socket->recv(&header))
         return false;
 
-    std::string* status_code;
-
     if(message::equal_to(header, codes::header::sender)) {
-        if(!handle_sender(sender)) {
-            status_code = &code201;
-        }
-        else {
-            status_code = &code404;
-        }
+        if(!handle_sender(sender))
+            return false;
     }
     else if(message::equal_to(header, codes::header::reciever)) {
-        if(!handle_reciever(sender)) {
-            status_code = &code201;
-        }
-        else {
-            status_code = &code404;
-        }
+        if(!handle_receiver(sender))
+            return false;
     }
     else {
         m_ctx->log(LL_WARNING) << "Recieved malformed message";
-        status_code = &code501;
     }
-
-    // acknowledgement message
-    m_socket->send(sender, ZMQ_SNDMORE);
-    m_socket->send(empty_part, ZMQ_SNDMORE);
-    m_socket->send(*status_code);
-
     return true;
 }
 
 bool broker_t::handle_sender(zmq::message_t& sender) {
     std::string service_name;
     if(!m_socket->recv(service_name))
-        return false;
+        return false; // interrupted
 
     service_ptr_t service = lookup_service(service_name);
 
@@ -135,7 +113,7 @@ bool broker_t::handle_sender(zmq::message_t& sender) {
     return true;
 }
 
-bool broker_t::handle_reciever(zmq::message_t &reciever) {
+bool broker_t::handle_receiver(zmq::message_t &reciever) {
     return false;
 }
 
