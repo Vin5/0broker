@@ -33,8 +33,6 @@ public:
     timer_t& operator -=(unsigned int milliseconds);
 
 private:
-    static int64_t now();
-
     int64_t m_milliseconds; // since epoch
 };
 

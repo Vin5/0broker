@@ -4,8 +4,15 @@
 
 namespace zbroker {
 
+// returns current time in milliseconds since epoch
+static int64_t current_time() {
+    struct timeval current_time;
+    ::gettimeofday(&current_time, nullptr);
+    return static_cast<int64_t>(current_time.tv_sec * 1000) + static_cast<int64_t>(current_time.tv_usec / 1000);
+}
+
 timer_t::timer_t()
-    : m_milliseconds(now())
+    : m_milliseconds(current_time())
 {
 }
 
@@ -19,11 +26,11 @@ timer_t &timer_t::operator =(const timer_t &other) {
 }
 
 void timer_t::drop() {
-    m_milliseconds =  now();
+    m_milliseconds =  current_time();
 }
 
 int64_t timer_t::elapsed() const {
-    return now() - m_milliseconds;
+    return current_time() - m_milliseconds;
 }
 
 bool timer_t::operator <(const timer_t &other) const {
@@ -58,12 +65,6 @@ timer_t& timer_t::operator +=(unsigned int milliseconds) {
 timer_t &timer_t::operator -=(unsigned int milliseconds) {
     m_milliseconds -= milliseconds;
     return *this;
-}
-
-int64_t timer_t::now() {
-    struct timeval current_time;
-    ::gettimeofday(&current_time, nullptr);
-    return static_cast<int64_t>(current_time.tv_sec * 1000) + static_cast<int64_t>(current_time.tv_usec / 1000);
 }
 
 timer_t operator+(const timer_t& one, unsigned int milliseconds) {
