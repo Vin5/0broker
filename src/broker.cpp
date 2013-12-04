@@ -59,6 +59,7 @@ void broker_t::run() {
             }
             if(time_point_t() > m_heartbeat_time) {
                 renew_recipients();
+                m_heartbeat_time = time_point_t() + HEARTBEAT_INTERVAL;
             }
         }
         if(m_interrupted) {
