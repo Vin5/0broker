@@ -1,7 +1,7 @@
 #ifndef MESSAGE_HPP
 #define MESSAGE_HPP
 
-#include <vector>
+#include <deque>
 
 #include "forwards.hpp"
 #include "msg_traits.hpp"
@@ -30,30 +30,42 @@ namespace message {
 class message_pack_t {
 public:
 
-    message_pack_t() {
-        m_parts.reserve(100);
-    }
-
     template<class T>
-    void pop(T& dst) {
+    void pop_tail(T& dst) {
         message_part_t part = m_parts.back();
         message::unpack(dst, *part);
         m_parts.pop_back();
     }
 
-    message_part_t pop() {
+    template<class T>
+    void pop_head(T& dst) {
+        message_part_t part = m_parts.front();
+        message::unpack(dst, *part);
+        m_parts.pop_front();
+    }
+
+    message_part_t pop_tail() {
         message_part_t part = m_parts.back();
         m_parts.pop_back();
         return part;
     }
 
+    message_part_t pop_head() {
+        message_part_t part = m_parts.front();
+        m_parts.pop_front();
+        return part;
+    }
 
-    void push(const message_part_t& part) {
+    void push_head(const message_part_t& part) {
+        m_parts.push_front(part);
+    }
+
+    void push_tail(const message_part_t& part) {
         m_parts.push_back(part);
     }
 
     template<class T>
-    void push(const T& data) {
+    void push_tail(const T& data) {
         message_part_t part(new zmq::message_t);
         message::pack(*part, data);
         m_parts.push_back(part);
@@ -71,12 +83,9 @@ public:
     }
 
 private:
-    std::vector<message_part_t> m_parts;
+    std::deque<message_part_t> m_parts;
 };
 
-
-
-
-}
+} // zbroker
 
 #endif // MESSAGE_HPP

@@ -9,33 +9,49 @@
 #include "forwards.hpp"
 #include "message.hpp"
 
-#include <ctime>
+#include "timer.hpp"
 
 namespace zbroker {
 
 class broker_t {
 
-
     struct recipient_t {
-        message_part_t identity;
-        time_t expiry;
+        recipient_t(const message_part_t& id)
+            : m_identity(id),
+              m_disconnected(false)
+        {
+        }
+
+        message_part_t identity() const;
+        bool expired() const;
+        bool disconnected() const;
+
+        void disconnect();
+        void update_expiration(const time_point_t& next_expiration);
+
+    private:
+        message_part_t m_identity;
+        time_point_t m_expiry;
+        bool m_disconnected;
     };
 
     typedef boost::shared_ptr<recipient_t> recipient_ptr_t;
-    typedef boost::weak_ptr<recipient_t> recipient_weak_t;
     typedef std::map<std::string, recipient_ptr_t> recipient_map_t;
 
     struct service_t {
+
+
         explicit service_t(const std::string& name)
             : name (name)
         {
         }
 
+        void attach_waiter(const recipient_ptr_t& waiter);
         void dispatch(const socket_ptr_t& backend, message_pack_t&& message);
 
         std::string name;
         std::list<message_pack_t> messages;
-        std::list<recipient_t> waiting;
+        std::list<recipient_ptr_t> waiting;
     };
 
     typedef boost::shared_ptr<service_t> service_ptr_t;
@@ -47,15 +63,22 @@ public:
 
     void run();
 
+    // signal handler calls this function
     void interrupt();
 
 private:
     bool handle_request();
-    bool handle_sender(zmq::message_t &sender);
-    bool handle_receiver(zmq::message_t &reciever);
+    void handle_sender(message_pack_t& msg);
+    void handle_receiver(message_pack_t& msg);
 
     service_ptr_t lookup_service(const std::string& name);
+    recipient_ptr_t lookup_recipient(const message_part_t& receiver);
 
+    // returns time point the next expiration occurs at
+    time_point_t next_expiration();
+
+    void renew_recipients();
+    void send_heartbeat(const recipient_ptr_t& recipient);
 
 private:
     context_ptr_t m_ctx;
@@ -64,6 +87,7 @@ private:
     socket_ptr_t m_socket;
     service_map_t m_services;
     recipient_map_t m_recipients;
+    time_point_t m_heartbeat_time;
 
     // indicates the broker was interrupted by a signal
     volatile bool m_interrupted;
