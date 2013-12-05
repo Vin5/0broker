@@ -76,11 +76,11 @@ bool broker_t::handle_request()  {
             handle_receiver(message);
         }
         else {
-            throw runtime_error_t("%s", "Malformed message");
+            m_ctx->log(LL_WARNING) << "Message discarded (header part is corrupted)";
         }
     }
     catch(const runtime_error_t& e) {
-        m_ctx->log(LL_WARNING) << "Message didn't treat properly (" << e.what() << ").";
+        m_ctx->log(LL_WARNING) <<  e.what();
     }
 
     return true;
@@ -90,7 +90,7 @@ void broker_t::handle_sender(message_pack_t& msg) {
 
     message_part_t command = msg.pop_head();
     if(!message::equal_to(*command, codes::control::sender::put)) {
-        throw runtime_error_t("%s", "Malformed message");
+        throw runtime_error_t("%s", "Message discarded (command part is corrupted)");
     }
 
     std::string service_name;
@@ -142,7 +142,7 @@ void broker_t::handle_receiver(message_pack_t &msg) {
     }
     else {
         recipient->disconnect(); // we don't need a problem
-        throw runtime_error_t("%s", "Malformed message");
+        throw runtime_error_t("%s", "Message discarded (command part is corrupted)");
     }
 }
 
