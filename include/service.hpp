@@ -22,6 +22,8 @@ public:
     void dispatch(const socket_ptr_t& backend);
 
 private:
+    void send_message(const socket_ptr_t& backend, const recipient_ptr_t& recipient, message_pack_t &msg);
+private:
     std::string name;
     std::list<message_pack_t> messages;
     std::list<recipient_ptr_t> waiting;

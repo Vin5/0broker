@@ -22,14 +22,18 @@ void service_t::dispatch(const socket_ptr_t &backend) {
 
         message_pack_t& message = messages.front();
 
-        backend->send(*recipient->identity(), ZMQ_SNDMORE);
-        backend->send("", ZMQ_SNDMORE);
-        backend->send(message);
+        send_message(backend, recipient, message);
 
         recipient->disconnect(); // disconnect served recipient
         waiting.pop_front();
         messages.pop_front();
-    }
+}
+}
+
+void service_t::send_message(const socket_ptr_t &backend, const recipient_ptr_t &recipient, message_pack_t &msg) {
+    backend->send(*recipient->identity(), ZMQ_SNDMORE);
+    backend->send("", ZMQ_SNDMORE);
+    backend->send(msg);
 }
 
 } // zbroker
