@@ -7,7 +7,8 @@
 #include "stl_helpers.hpp"
 #include "message.hpp"
 #include "errors.hpp"
-#include <iostream>
+#include "recipient.hpp"
+
 namespace codes {
     namespace header {
         static const char* const sender =   "001";
@@ -229,26 +230,5 @@ void broker_t::service_t::dispatch(const socket_ptr_t &backend) {
         messages.pop_front();
     }
 }
-
-message_part_t broker_t::recipient_t::identity() const {
-    return m_identity;
-}
-
-bool broker_t::recipient_t::expired() const {
-    return time_point_t() > m_expiry;
-}
-
-bool broker_t::recipient_t::disconnected() const {
-    return m_disconnected;
-}
-
-void broker_t::recipient_t::update_expiration(const time_point_t &expiration) {
-    m_expiry = expiration;
-}
-
-void broker_t::recipient_t::disconnect() {
-    m_disconnected = true;
-}
-
 
 } // zbroker

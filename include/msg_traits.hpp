@@ -39,6 +39,10 @@ struct message_traits<const char*> {
     static void unpack(char* dst, const zmq::message_t& src) = delete;
 
     static bool equals(const zmq::message_t& msg, const char* data) {
+        size_t data_length = strlen(data);
+        if(msg.size() != data_length) {
+            return false;
+        }
         return (memcmp(msg.data(), data, msg.size()) == 0);
     }
 };

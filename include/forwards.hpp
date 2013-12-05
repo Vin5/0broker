@@ -17,6 +17,7 @@ namespace zbroker {
     class logger_t;
     class endpoint_t;
     class message_pack_t;
+    class recipient_t;
 
     typedef boost::shared_ptr<context_t> context_ptr_t;
     typedef boost::shared_ptr<socket_t> socket_ptr_t;
