@@ -4,31 +4,12 @@
 #include "socket.hpp"
 #include "poller.hpp"
 #include "endpoint.hpp"
-#include "stl_helpers.hpp"
 #include "message.hpp"
 #include "errors.hpp"
 #include "recipient.hpp"
 #include "service.hpp"
 
-namespace codes {
-    namespace header {
-        static const char* const sender =   "001";
-        static const char* const receiver = "002";
-    }
-
-    namespace control {
-        namespace sender {
-            static const char* const put =          "001";
-        }
-
-        namespace receiver {
-            static const char* const ready =        "001";
-            static const char* const reply =        "002";
-            static const char* const heartbeat =    "003";
-            static const char* const disconnect =   "004";
-        }
-    }
-}
+#include "codes.hpp"
 
 namespace zbroker {
 
