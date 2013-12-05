@@ -15,31 +15,8 @@ namespace zbroker {
 
 class broker_t {
 
-    typedef boost::shared_ptr<recipient_t> recipient_ptr_t;
     typedef std::map<std::string, recipient_ptr_t> recipient_map_t;
-
-    struct service_t {
-
-
-        explicit service_t(const std::string& name)
-            : name (name)
-        {
-        }
-
-        void attach_waiter(const recipient_ptr_t& waiter);
-        void append_message(message_pack_t&& message);
-
-        void dispatch(const socket_ptr_t& backend);
-
-    private:
-        std::string name;
-        std::list<message_pack_t> messages;
-        std::list<recipient_ptr_t> waiting;
-    };
-
-    typedef boost::shared_ptr<service_t> service_ptr_t;
     typedef std::map<std::string, service_ptr_t> service_map_t;
-
 
 public:
     broker_t(const context_ptr_t& ctx);
@@ -66,15 +43,15 @@ private:
 private:
     context_ptr_t m_ctx;
 
-    // socket for senders and recievers
-    socket_ptr_t m_socket;
-    service_map_t m_services;
-    recipient_map_t m_recipients;
-    time_point_t m_heartbeat_time;
 
-    // indicates the broker was interrupted by a signal
-    volatile bool m_interrupted;
+    socket_ptr_t m_socket; // socket for senders and recievers
+    service_map_t m_services; // known services
+    recipient_map_t m_recipients; // active recipients
+    time_point_t m_heartbeat_time; // time to send a heartbeat to active recipients and remove stale ones
 
+    volatile bool m_interrupted; // broker was interrupted by a signal
+
+private:
     broker_t(const broker_t&);
     void operator=(const broker_t&);
 };

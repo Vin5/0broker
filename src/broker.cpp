@@ -8,6 +8,7 @@
 #include "message.hpp"
 #include "errors.hpp"
 #include "recipient.hpp"
+#include "service.hpp"
 
 namespace codes {
     namespace header {
@@ -122,7 +123,7 @@ void broker_t::handle_sender(message_pack_t& msg) {
     service->dispatch(m_socket);
 }
 
-broker_t::service_ptr_t broker_t::lookup_service(const std::string &name) {
+service_ptr_t broker_t::lookup_service(const std::string &name) {
     auto service_iterator = m_services.find(name);
     if(service_iterator == m_services.end()) {
         service_ptr_t service = boost::make_shared<service_t>(name);
@@ -165,7 +166,7 @@ void broker_t::handle_receiver(message_pack_t &msg) {
 }
 
 
-broker_t::recipient_ptr_t broker_t::lookup_recipient(const message_part_t &receiver) {
+recipient_ptr_t broker_t::lookup_recipient(const message_part_t &receiver) {
     std::string address;
     message::unpack(address, *receiver);
 
@@ -198,37 +199,8 @@ void broker_t::renew_recipients() {
     }
 }
 
-void broker_t::send_heartbeat(const broker_t::recipient_ptr_t &recipient) {
+void broker_t::send_heartbeat(const recipient_ptr_t &recipient) {
 
-}
-
-void broker_t::service_t::attach_waiter(const broker_t::recipient_ptr_t &waiter) {
-    waiting.remove(waiter);
-    waiting.push_back(waiter);
-}
-
-void broker_t::service_t::append_message(message_pack_t && msg) {
-    messages.push_back(msg);
-}
-
-void broker_t::service_t::dispatch(const socket_ptr_t &backend) {
-
-    // purge stale recipients
-    waiting.remove_if([](const broker_t::recipient_ptr_t& recipient) { return recipient->expired() || recipient->disconnected(); });
-
-    while(!messages.empty() && !waiting.empty()) {
-        broker_t::recipient_ptr_t recipient = waiting.front();
-
-        message_pack_t& message = messages.front();
-
-        backend->send(*recipient->identity(), ZMQ_SNDMORE);
-        backend->send("", ZMQ_SNDMORE);
-        backend->send(message);
-
-        recipient->disconnect(); // disconnect served recipient
-        waiting.pop_front();
-        messages.pop_front();
-    }
 }
 
 } // zbroker
