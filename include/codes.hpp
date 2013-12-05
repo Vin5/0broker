@@ -24,8 +24,16 @@ namespace zbroker {
 //      -----------------------
 //     |    payload (part n)   |   -- optional
 //      -----------------------
+//
+//  sender identity - uniquely identifies the message sender
+//  empty part - follows ZeroMQ message format requirements (REQ sockets)
+//  header - means a type of sender
+//  command - RPC codes for message dispatching
+//  destination - where the payload have to go to
+//  payload - useful data of the message
 
-// control codes needed to message dispatching
+
+// following control codes are needed for message dispatching
 namespace codes {
 
     namespace header {
