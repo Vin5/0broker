@@ -7,7 +7,7 @@
 #include "stl_helpers.hpp"
 #include "message.hpp"
 #include "errors.hpp"
-
+#include <iostream>
 namespace codes {
     namespace header {
         static const char* const sender =   "001";
@@ -117,7 +117,8 @@ void broker_t::handle_sender(message_pack_t& msg) {
     service_ptr_t service = lookup_service(service_name);
 
     // the rest of the message is a payload
-    service->dispatch(m_socket, std::move(msg));
+    service->append_message(std::move(msg));
+    service->dispatch(m_socket);
 }
 
 broker_t::service_ptr_t broker_t::lookup_service(const std::string &name) {
@@ -147,6 +148,7 @@ void broker_t::handle_receiver(message_pack_t &msg) {
         // get or create a service and attach recipient
         service_ptr_t service = lookup_service(service_name);
         service->attach_waiter(recipient);
+        service->dispatch(m_socket);
     }
     else if(message::equal_to(*command, codes::control::receiver::heartbeat)) {
         recipient->update_expiration(next_expiration());
@@ -204,8 +206,11 @@ void broker_t::service_t::attach_waiter(const broker_t::recipient_ptr_t &waiter)
     waiting.push_back(waiter);
 }
 
-void broker_t::service_t::dispatch(const socket_ptr_t &backend, message_pack_t&& msg) {
+void broker_t::service_t::append_message(message_pack_t && msg) {
     messages.push_back(msg);
+}
+
+void broker_t::service_t::dispatch(const socket_ptr_t &backend) {
 
     // purge stale recipients
     waiting.remove_if([](const broker_t::recipient_ptr_t& recipient) { return recipient->expired() || recipient->disconnected(); });
@@ -215,14 +220,14 @@ void broker_t::service_t::dispatch(const socket_ptr_t &backend, message_pack_t&&
 
         message_pack_t& message = messages.front();
 
-        backend->send(*recipient->identity());
-        backend->send("");
+        backend->send(*recipient->identity(), ZMQ_SNDMORE);
+        backend->send("", ZMQ_SNDMORE);
         backend->send(message);
 
         recipient->disconnect(); // disconnect served recipient
         waiting.pop_front();
         messages.pop_front();
-}
+    }
 }
 
 message_part_t broker_t::recipient_t::identity() const {
@@ -230,7 +235,7 @@ message_part_t broker_t::recipient_t::identity() const {
 }
 
 bool broker_t::recipient_t::expired() const {
-    return time_point_t() < m_expiry;
+    return time_point_t() > m_expiry;
 }
 
 bool broker_t::recipient_t::disconnected() const {

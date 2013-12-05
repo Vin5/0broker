@@ -47,7 +47,9 @@ class broker_t {
         }
 
         void attach_waiter(const recipient_ptr_t& waiter);
-        void dispatch(const socket_ptr_t& backend, message_pack_t&& message);
+        void append_message(message_pack_t&& message);
+
+        void dispatch(const socket_ptr_t& backend);
 
         std::string name;
         std::list<message_pack_t> messages;
