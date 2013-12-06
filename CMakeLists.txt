@@ -9,6 +9,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 add_definitions("-Wall -std=c++11 -pedantic")
+add_definitions("-DBOOST_SP_DISABLE_THREADS")
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions("-D_DEBUG")
 endif()

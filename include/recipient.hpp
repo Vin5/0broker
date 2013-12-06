@@ -1,7 +1,10 @@
 #ifndef RECIPIENT_HPP
 #define RECIPIENT_HPP
 
-#include <forwards.hpp>
+
+#include <string>
+
+#include "forwards.hpp"
 #include "timer.hpp"
 
 namespace zbroker {
@@ -9,13 +12,13 @@ namespace zbroker {
 // broker client who wants to get a message
 class recipient_t {
 public:
-    explicit recipient_t(const message_part_t& id)
+    explicit recipient_t(const std::string& id)
         : m_identity(id),
           m_disconnected(false)
     {
     }
 
-    message_part_t identity() const;
+    const std::string& identity() const;
     bool expired() const;
     bool disconnected() const;
 
@@ -24,7 +27,7 @@ public:
     void update_expiration(const time_point_t& next_expiration);
 
 private:
-    message_part_t m_identity;  // recipient "address"
+    std::string m_identity;     // recipient "address"
     time_point_t m_expiry;      // after the time recipient is considered dead
     bool m_disconnected;        // recipient has been served or disconnected by request
 

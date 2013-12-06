@@ -2,7 +2,7 @@
 
 namespace zbroker {
 
-message_part_t recipient_t::identity() const {
+const std::string &recipient_t::identity() const {
     return m_identity;
 }
 
@@ -19,6 +19,7 @@ void recipient_t::disconnect() {
 }
 
 void recipient_t::update_expiration(const time_point_t& next_expiration) {
+    m_disconnected = false;
     m_expiry = next_expiration;
 }
 

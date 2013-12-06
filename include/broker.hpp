@@ -32,7 +32,7 @@ private:
     void handle_receiver(message_pack_t& msg);
 
     service_ptr_t lookup_service(const std::string& name);
-    recipient_ptr_t lookup_recipient(const message_part_t& receiver);
+    recipient_ptr_t lookup_recipient(const std::string &address);
 
     // returns time point the next expiration occurs at
     time_point_t next_expiration();

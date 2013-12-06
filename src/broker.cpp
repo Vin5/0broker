@@ -115,9 +115,8 @@ service_ptr_t broker_t::lookup_service(const std::string &name) {
 }
 
 void broker_t::handle_receiver(message_pack_t &msg) {
-    message_part_t receiver = msg.pop_head();
-    std::string address;
-    message::unpack(address, *receiver);
+    std::string receiver;
+    msg.pop_head(receiver);
 
     // get or create recipient
     recipient_ptr_t recipient = lookup_recipient(receiver);
@@ -138,7 +137,7 @@ void broker_t::handle_receiver(message_pack_t &msg) {
     }
     else if(message::equal_to(*command, codes::control::receiver::disconnect)) {
         recipient->disconnect();
-        m_recipients.erase(address);
+        m_recipients.erase(receiver);
     }
     else {
         recipient->disconnect(); // we don't need a problem
@@ -147,13 +146,10 @@ void broker_t::handle_receiver(message_pack_t &msg) {
 }
 
 
-recipient_ptr_t broker_t::lookup_recipient(const message_part_t &receiver) {
-    std::string address;
-    message::unpack(address, *receiver);
-
+recipient_ptr_t broker_t::lookup_recipient(const std::string& address) {
     auto recipient_iterator = m_recipients.find(address);
     if(recipient_iterator == m_recipients.end()) { // never seen before
-        recipient_ptr_t recipient = boost::make_shared<recipient_t>(receiver);
+        recipient_ptr_t recipient = boost::make_shared<recipient_t>(address);
         recipient->update_expiration(next_expiration());
         m_recipients.insert(std::make_pair(address, recipient));
         return recipient;

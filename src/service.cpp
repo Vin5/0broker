@@ -31,9 +31,11 @@ void service_t::dispatch(const socket_ptr_t &backend) {
 }
 
 void service_t::send_message(const socket_ptr_t &backend, const recipient_ptr_t &recipient, message_pack_t &msg) {
-    backend->send(*recipient->identity(), ZMQ_SNDMORE);
+    backend->send(recipient->identity(), ZMQ_SNDMORE);
     backend->send("", ZMQ_SNDMORE);
     backend->send(msg);
+
+
 }
 
 } // zbroker

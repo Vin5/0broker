@@ -1,7 +1,6 @@
 #ifndef TIMER_HPP
 #define TIMER_HPP
 
-#include <memory>
 #include <cstdint>
 
 namespace zbroker {

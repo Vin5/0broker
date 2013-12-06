@@ -30,7 +30,7 @@ private:
 };
 
 namespace default_configuration {
-    static const endpoint_t address(TT_IPC, "/tmp/backend.ipc"); // broker binds to this endpoint
+    static const endpoint_t address(TT_TCP, "127.0.0.1:5555"); // broker binds to this endpoint
     static const logger_type_e logger_type = LT_STDOUT;
     static const bool is_daemon = false; // whether or no I am a daemon
     static const size_t heartbeat_interval = 2500; // msecs
