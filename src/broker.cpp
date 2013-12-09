@@ -23,34 +23,30 @@ broker_t::broker_t(const context_ptr_t& ctx)
 
 void broker_t::run() {
     m_ctx->log(LL_INFO) << "Broker has started at " << m_ctx->config()->address();
-    try {
-        const size_t BROKER_SOCKET_INDEX = 0;
-        const size_t HEARTBEAT_INTERVAL = m_ctx->config()->heartbeat_interval();
-        m_heartbeat_time = time_point_t() + HEARTBEAT_INTERVAL;
 
-        poller_t poller;
-        poller.add(*m_socket);
+    const size_t BROKER_SOCKET_INDEX = 0;
+    const size_t HEARTBEAT_INTERVAL = m_ctx->config()->heartbeat_interval();
+    m_heartbeat_time = time_point_t() + HEARTBEAT_INTERVAL;
 
-        while(true) {
-            if(!poller.poll_in(HEARTBEAT_INTERVAL)) {
-                break; // interrupted or error occured
-            }
-            if(poller.check(BROKER_SOCKET_INDEX, ZMQ_POLLIN)) {
-                if(!handle_request()) {
-                    break; // interrupted
-                }
-            }
-            if(time_point_t() > m_heartbeat_time) {
-                renew_recipients();
-                m_heartbeat_time = time_point_t() + HEARTBEAT_INTERVAL;
+    poller_t poller;
+    poller.add(*m_socket);
+
+    while(true) {
+        if(!poller.poll_in(HEARTBEAT_INTERVAL)) {
+            break; // interrupted or error occured
+        }
+        if(poller.check(BROKER_SOCKET_INDEX, ZMQ_POLLIN)) {
+            if(!handle_request()) {
+                break; // interrupted
             }
         }
-        if(m_interrupted) {
-            m_ctx->log(LL_INFO) << "Broker has been interrupted by a signal. Stop serving.";
+        if(time_point_t() > m_heartbeat_time) {
+            renew_recipients();
+            m_heartbeat_time = time_point_t() + HEARTBEAT_INTERVAL;
         }
     }
-    catch(const std::exception& e) {
-        m_ctx->log(LL_ERROR) << e.what();
+    if(m_interrupted) {
+        m_ctx->log(LL_INFO) << "Broker has been interrupted by a signal. Stop serving.";
     }
 }
 
@@ -177,7 +173,9 @@ void broker_t::renew_recipients() {
 }
 
 void broker_t::send_heartbeat(const recipient_ptr_t &recipient) {
-
+    m_socket->send(recipient->identity(), ZMQ_SNDMORE);
+    m_socket->send("", ZMQ_SNDMORE);
+    m_socket->send(codes::control::broker::heartbeat);
 }
 
 } // zbroker

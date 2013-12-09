@@ -1,6 +1,7 @@
 #include "service.hpp"
 #include "recipient.hpp"
 #include "socket.hpp"
+#include "codes.hpp"
 
 namespace zbroker {
 
@@ -33,9 +34,8 @@ void service_t::dispatch(const socket_ptr_t &backend) {
 void service_t::send_message(const socket_ptr_t &backend, const recipient_ptr_t &recipient, message_pack_t &msg) {
     backend->send(recipient->identity(), ZMQ_SNDMORE);
     backend->send("", ZMQ_SNDMORE);
+    backend->send(codes::control::broker::data, ZMQ_SNDMORE);
     backend->send(msg);
-
-
 }
 
 } // zbroker
