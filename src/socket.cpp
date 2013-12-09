@@ -44,10 +44,10 @@ bool socket_t::send(message_pack_t &msg, int flags) {
 
 bool socket_t::recv(message_pack_t &msg_pack, int flags) {
     do {
-        message_part_t msg = boost::make_shared<zmq::message_t>();
+        message_part_t msg(new zmq::message_t);
         if(!m_socket.recv(msg.get(), flags))
             return false;
-        msg_pack.push_tail(msg);
+        msg_pack.push_tail(std::move(msg));
     } while (has_more());
     return true;
 }

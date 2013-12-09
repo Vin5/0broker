@@ -10,7 +10,7 @@ void service_t::attach_waiter(const recipient_ptr_t &waiter) {
 }
 
 void service_t::append_message(message_pack_t && msg) {
-    messages.push_back(msg);
+    messages.push_back(std::move(msg));
 }
 
 void service_t::dispatch(const socket_ptr_t &backend) {

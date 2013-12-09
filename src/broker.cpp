@@ -72,7 +72,7 @@ bool broker_t::handle_request()  {
             handle_sender(message);
         }
         else if(message::equal_to(*header, codes::header::receiver)) {
-            message.push_head(sender);
+            message.push_head(std::move(sender));
             handle_receiver(message);
         }
         else {
@@ -107,7 +107,7 @@ void broker_t::handle_sender(message_pack_t& msg) {
 service_ptr_t broker_t::lookup_service(const std::string &name) {
     auto service_iterator = m_services.find(name);
     if(service_iterator == m_services.end()) {
-        service_ptr_t service = boost::make_shared<service_t>(name);
+        service_ptr_t service = std::make_shared<service_t>(name);
         m_services.insert(std::make_pair(name, service));
         return service;
     }
@@ -149,7 +149,7 @@ void broker_t::handle_receiver(message_pack_t &msg) {
 recipient_ptr_t broker_t::lookup_recipient(const std::string& address) {
     auto recipient_iterator = m_recipients.find(address);
     if(recipient_iterator == m_recipients.end()) { // never seen before
-        recipient_ptr_t recipient = boost::make_shared<recipient_t>(address);
+        recipient_ptr_t recipient = std::make_shared<recipient_t>(address);
         recipient->update_expiration(next_expiration());
         m_recipients.insert(std::make_pair(address, recipient));
         return recipient;

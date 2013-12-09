@@ -2,6 +2,7 @@
 #define MESSAGE_HPP
 
 #include <deque>
+#include <list>
 
 #include "forwards.hpp"
 #include "msg_traits.hpp"
@@ -39,29 +40,29 @@ public:
 
     template<class T>
     void pop_head(T& dst) {
-        message_part_t part = m_parts.front();
+        message_part_t& part = m_parts.front();
         message::unpack(dst, *part);
         m_parts.pop_front();
     }
 
     message_part_t pop_tail() {
-        message_part_t part = m_parts.back();
+        message_part_t part = std::move(m_parts.back());
         m_parts.pop_back();
         return part;
     }
 
     message_part_t pop_head() {
-        message_part_t part = m_parts.front();
+        message_part_t part = std::move(m_parts.front());
         m_parts.pop_front();
         return part;
     }
 
-    void push_head(const message_part_t& part) {
-        m_parts.push_front(part);
+    void push_head(message_part_t&& part) {
+        m_parts.push_front(std::move(part));
     }
 
-    void push_tail(const message_part_t& part) {
-        m_parts.push_back(part);
+    void push_tail(message_part_t&& part) {
+        m_parts.push_back(std::move(part));
     }
 
     template<class T>
