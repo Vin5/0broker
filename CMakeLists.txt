@@ -23,18 +23,37 @@ find_package(Boost 1.42.0 REQUIRED
 
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${ZeroMQ_INCLUDE_DIRS})
-include_directories(${PROJECT_SOURCE_DIR}/include)
+
+include_directories(${PROJECT_SOURCE_DIR}/include/broker)
+
 
 link_directories(${ZeroMQ_LIBRARY_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
 file(GLOB ZBROKER_INCLUDES
-    "include/*.hpp")
+    "include/broker/*.hpp")
 
 file(GLOB ZBROKER_SOURCES
-    "src/*.cpp")
+    "src/broker/*.cpp")
+
 
 add_executable(zbroker ${ZBROKER_INCLUDES} ${ZBROKER_SOURCES})
 
 target_link_libraries(zbroker ${ZeroMQ_LIBRARIES})
 target_link_libraries(zbroker ${Boost_LIBRARIES})
+
+include_directories(${PROJECT_SOURCE_DIR}/include/client)
+
+file(GLOB ZBROKER_CLIENT_INCLUDES
+    "src/client/*.hpp")
+
+file(GLOB ZBROKER_CLIENT_SOURCES
+    "src/client/*.cpp")
+
+add_library(zclient SHARED ${ZBROKER_CLIENT_INCLUDES} ${ZBROKER_CLIENT_SOURCES})
+
+target_link_libraries(zclient ${ZeroMQ_LIBRARIES})
+target_link_libraries(zclient ${Boost_LIBRARIES})
+
+add_executable(test src/tests/main.cpp)
+target_link_libraries(test zclient)

@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "errors.hpp"
 #include "broker.hpp"
 #include "context.hpp"
