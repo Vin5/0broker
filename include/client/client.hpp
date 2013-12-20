@@ -10,7 +10,7 @@
 
 class sender_iface_t {
 public:
-    ~sender_iface_t() { }
+    virtual ~sender_iface_t() { }
     void send(const std::string&);
     void send(const std::vector<std::string>&);
 private:
@@ -21,7 +21,7 @@ typedef boost::shared_ptr<sender_iface_t> sender_ptr_t;
 
 class receiver_iface_t {
 public:
-    ~receiver_iface_t() { }
+    virtual ~receiver_iface_t() { }
     void recv(std::vector<std::string>&);
 private:
     virtual void recv(data_container_t&) = 0;
