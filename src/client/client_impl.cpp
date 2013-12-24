@@ -132,11 +132,17 @@ void receiver_impl_t::recv(data_container_t & data) {
     }
 }
 
-async_receiver_impl_t::~async_receiver_impl_t()
-{
-    send(*m_background_manager, "stop");
-    zmq::message_t ok;
-    m_background_manager->recv(&ok);
+async_receiver_impl_t::~async_receiver_impl_t() {
+    try {
+        if(m_handler) {
+            send(*m_background_manager, "stop");
+            zmq::message_t ok;
+            m_background_manager->recv(&ok);
+        }
+    }
+    catch(...) {
+        std::cout << "~async_receiver_impl_t exception caught" << std::endl;
+    }
 }
 
 async_receiver_impl_t::async_receiver_impl_t(const connection_ptr_t &connection, const std::string &service)
