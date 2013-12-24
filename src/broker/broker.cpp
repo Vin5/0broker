@@ -10,6 +10,7 @@
 #include "service.hpp"
 
 #include "codes.hpp"
+#include <iostream>
 
 namespace zbroker {
 
@@ -98,6 +99,8 @@ void broker_t::handle_sender(message_pack_t& msg) {
     // the rest of the message is a payload
     service->append_message(std::move(msg));
     service->dispatch(m_socket);
+
+    std::cout << "Received message" << std::endl;
 }
 
 service_ptr_t broker_t::lookup_service(const std::string &name) {

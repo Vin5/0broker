@@ -2,15 +2,22 @@
 #include "errors.hpp"
 #include "codes.hpp"
 #include "message.hpp"
+#include "connection.hpp"
 
 #include <auto_ptr.h>
 #include <sys/time.h>
 
-sender_impl_t::sender_impl_t(const boost::shared_ptr<zmq::socket_t>& sock, const std::string &service)
-    : m_service(service),
-      m_socket(sock)
-{
 
+
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
+
+sender_impl_t::sender_impl_t(const connection_ptr_t& connection, const std::string &service)
+    : sender_iface_t(connection),
+      m_service(service)
+{
+    m_socket = create_socket(ZMQ_DEALER, generate_uuid());
+    m_socket->connect(m_connection->address().c_str());
 }
 
 void sender_impl_t::send(data_container_t& data) {
@@ -45,11 +52,12 @@ void sender_impl_t::send(data_container_t& data) {
 }
 
 
-receiver_impl_t::receiver_impl_t(const boost::shared_ptr<zmq::socket_t> &sock, const std::string &service)
-    : m_service(service),
-      m_socket(sock)
+receiver_impl_t::receiver_impl_t(const connection_ptr_t& connection, const std::string &service)
+    : receiver_iface_t(connection),
+      m_service(service)
 {
-
+    m_socket = create_socket(ZMQ_DEALER, generate_uuid());
+    m_socket->connect(m_connection->address().c_str());
 }
 
 // returns current time in milliseconds since epoch
@@ -59,13 +67,27 @@ static int64_t current_time() {
     return static_cast<int64_t>(current_time.tv_sec * 1000) + static_cast<int64_t>(current_time.tv_usec / 1000);
 }
 
+static void send(zmq::socket_t& socket, const std::string& data, int options = 0) {
+    zmq::message_t msg(data.size());
+    if(!data.empty()) {
+        memcpy(msg.data(), (void*)data.c_str(), data.size());
+    }
+    socket.send(msg, options);
+}
+
+static void send_receiver_is_ready(zmq::socket_t& socket, const std::string& destination) {
+    send(socket, std::string(), ZMQ_SNDMORE); // empty
+    send(socket, zbroker::codes::header::receiver, ZMQ_SNDMORE); // who am I
+    send(socket, zbroker::codes::control::receiver::ready, ZMQ_SNDMORE); // what I want
+    send(socket, destination); // where I send it
+}
+
 void receiver_impl_t::recv(data_container_t & data) {
-    send_readiness();
-
-
+    send_receiver_is_ready(*m_socket, m_service);
 
     int liveness = 3;
-    int64_t heartbeat_at = current_time() + 2500;
+    int interval = 2500;
+    int64_t heartbeat_at = current_time() + interval;
     while(liveness) {
         zmq::pollitem_t item[] = {
             {*m_socket, 0, ZMQ_POLLIN, 0}
@@ -98,37 +120,112 @@ void receiver_impl_t::recv(data_container_t & data) {
                 std::cout << "Invalid message" << std::endl;
         }
         else {
-            send_readiness();
+            send_receiver_is_ready(*m_socket, m_service);
             liveness--;
         }
         if(current_time() > heartbeat_at) {
-            send_header();
-            send_command(zbroker::codes::control::receiver::heartbeat);
-            heartbeat_at = current_time() + 2500;
+            send(*m_socket, std::string(), ZMQ_SNDMORE);
+            send(*m_socket, zbroker::codes::header::receiver, ZMQ_SNDMORE);
+            send(*m_socket, zbroker::codes::control::receiver::heartbeat);;
+            heartbeat_at = current_time() + interval;
         }
     }
 }
 
-void receiver_impl_t::send_header() {
-    zmq::message_t empty;
-    m_socket->send(empty, ZMQ_SNDMORE);
-
-    zmq::message_t header(3);
-    memcpy(header.data(), (void*)zbroker::codes::header::receiver, 3);
-    m_socket->send(header, ZMQ_SNDMORE);
+async_receiver_impl_t::~async_receiver_impl_t()
+{
+    send(*m_background_manager, "stop");
+    zmq::message_t ok;
+    m_background_manager->recv(&ok);
 }
 
-void receiver_impl_t::send_command(const std::string &command_str, int options) {
-    zmq::message_t command(command_str.size());
-    memcpy(command.data(), (void*)command_str.data(), command_str.size());
-    m_socket->send(command, options);
+async_receiver_impl_t::async_receiver_impl_t(const connection_ptr_t &connection, const std::string &service)
+    : async_receiver_iface_t(connection),
+      m_service(service)
+{
+    m_background_manager = create_socket(ZMQ_PAIR);
+    m_background_manager->bind("inproc://management");
 }
 
-void receiver_impl_t::send_readiness() {
-    send_header();
-    send_command(zbroker::codes::control::receiver::ready, ZMQ_SNDMORE);
+void async_receiver_impl_t::set_handler(const async_receiver_iface_t::handler_ptr_t &handler) {
+    m_handler = handler;
+    boost::thread t(boost::bind(&async_receiver_impl_t::background_receiver, this));
+    t.detach();
+}
 
-    zmq::message_t destination(m_service.size());
-    memcpy(destination.data(), (void*)m_service.data(), m_service.size());
-    m_socket->send(destination);
+void async_receiver_impl_t::background_receiver() {
+    // connect to broker
+    boost::shared_ptr<zmq::socket_t> socket = create_socket(ZMQ_DEALER, generate_uuid());
+    socket->connect(m_connection->address().c_str());
+
+    // connect to thread manager
+    boost::shared_ptr<zmq::socket_t> controller = create_socket(ZMQ_PAIR);
+    controller->connect("inproc://management");
+
+
+
+    int liveness = 3;
+    int interval = 2500;
+    int64_t heartbeat_at = current_time() + interval;
+    bool stopped = false;
+
+    while(liveness && !stopped) {
+        // send to broker we are ready to receive data
+        send_receiver_is_ready(*socket, m_service);
+
+        zmq::pollitem_t item[] = {
+            {*controller, 0, ZMQ_POLLIN, 0},
+            {*socket, 0, ZMQ_POLLIN, 0}
+        };
+
+        zmq::poll(item, 2, 2500);
+        if(item[0].revents & ZMQ_POLLIN) {
+            zmq::message_t control_msg;
+            controller->recv(&control_msg);
+            send(*socket, std::string(), ZMQ_SNDMORE);
+            send(*socket, zbroker::codes::header::receiver, ZMQ_SNDMORE);
+            send(*socket, zbroker::codes::control::receiver::disconnect);
+
+            send(*controller, "ok");
+            stopped = true;
+        }
+        if(item[1].revents & ZMQ_POLLIN) {
+
+            liveness = 3;
+
+            zmq::message_t empty;
+            socket->recv(&empty);
+
+            zmq::message_t header;
+            socket->recv(&header);
+
+            if(zbroker::message::equal_to(header, zbroker::codes::control::broker::data)) {
+                data_container_t data;
+                bool more = true;
+                while(more) {
+                    std::auto_ptr<zmq::message_t> reply(new zmq::message_t) ;
+                    socket->recv(reply.get());
+                    more = reply->more();
+                    data.append_data(reply);
+                }
+                data_list_t data_transformed;
+                data.get_data(data_transformed);
+                m_handler->on_recv(data_transformed);
+            }
+            else if(zbroker::message::equal_to(header, zbroker::codes::control::broker::heartbeat))
+                std::cout << "hearbeat" << std::endl;
+            else
+                std::cout << "Invalid message" << std::endl;
+        }
+        else if(!stopped){
+            send_receiver_is_ready(*socket, m_service);
+            liveness--;
+        }
+        if(current_time() > heartbeat_at && !stopped) {
+            send(*socket, std::string(), ZMQ_SNDMORE);
+            send(*socket, zbroker::codes::header::receiver, ZMQ_SNDMORE);
+            send(*socket, zbroker::codes::control::receiver::heartbeat);
+            heartbeat_at = current_time() + interval;
+        }
+    }
 }
