@@ -36,15 +36,15 @@ boost::shared_ptr<zmq::socket_t> connection_t::create_socket(int type, const std
 
 
 
-sender_ptr_t client_creation_policy<sender_iface_t>::create(const connection_ptr_t& connection, const std::string &name) {
+sender_ptr_t client_creation_policy<sender_t>::create(const connection_ptr_t& connection, const std::string &name) {
     return boost::make_shared<sender_impl_t>(connection, name);
 }
 
-receiver_ptr_t client_creation_policy<receiver_iface_t>::create(const connection_ptr_t& connection, const std::string &name) {
+receiver_ptr_t client_creation_policy<receiver_t>::create(const connection_ptr_t& connection, const std::string &name) {
     return boost::make_shared<receiver_impl_t>(connection, name);
 }
 
 
-async_receiver_ptr_t client_creation_policy<async_receiver_iface_t>::create(const connection_ptr_t &connection, const std::string &name) {
+async_receiver_ptr_t client_creation_policy<async_receiver_t>::create(const connection_ptr_t &connection, const std::string &name) {
     return boost::make_shared<async_receiver_impl_t>(connection, name);
 }

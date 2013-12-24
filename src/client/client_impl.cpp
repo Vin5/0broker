@@ -11,7 +11,7 @@
 #include <boost/bind.hpp>
 
 sender_impl_t::sender_impl_t(const connection_ptr_t& connection, const std::string &service)
-    : sender_iface_t(connection),
+    : sender_t(connection),
       m_service(service)
 {
     m_socket = create_socket(ZMQ_DEALER, generate_uuid());
@@ -51,7 +51,7 @@ void sender_impl_t::send(data_container_t& data) {
 
 
 receiver_impl_t::receiver_impl_t(const connection_ptr_t& connection, const std::string &service)
-    : receiver_iface_t(connection),
+    : receiver_t(connection),
       m_service(service)
 {
     m_socket = create_socket(ZMQ_DEALER, generate_uuid());
@@ -144,14 +144,14 @@ async_receiver_impl_t::~async_receiver_impl_t() {
 }
 
 async_receiver_impl_t::async_receiver_impl_t(const connection_ptr_t &connection, const std::string &service)
-    : async_receiver_iface_t(connection),
+    : async_receiver_t(connection),
       m_service(service)
 {
     m_background_manager = create_socket(ZMQ_PAIR);
     m_background_manager->bind("inproc://management");
 }
 
-void async_receiver_impl_t::set_handler(const async_receiver_iface_t::handler_ptr_t &handler) {
+void async_receiver_impl_t::set_handler(const async_receiver_t::handler_ptr_t &handler) {
     m_handler = handler;
     boost::thread t(boost::bind(&async_receiver_impl_t::background_receiver, this));
     t.detach();

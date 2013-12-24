@@ -41,31 +41,31 @@ private:
 };
 
 // interface for data sending tasks
-class sender_iface_t  : public client_t {
+class sender_t  : public client_t {
 public:
-    explicit sender_iface_t(const connection_ptr_t& connection)
+    explicit sender_t(const connection_ptr_t& connection)
         : client_t(connection)
     {
     }
 
-    virtual ~sender_iface_t() { }
+    virtual ~sender_t() { }
     void send(const std::string&);
     void send(const std::vector<std::string>&);
 private:
     virtual void send(data_container_t&) = 0;
 };
 
-typedef boost::shared_ptr<sender_iface_t> sender_ptr_t;
+typedef boost::shared_ptr<sender_t> sender_ptr_t;
 
 // synchronous interface for data receiving tasks
-class receiver_iface_t : public client_t {
+class receiver_t : public client_t {
 public:
-    explicit receiver_iface_t(const connection_ptr_t& connection)
+    explicit receiver_t(const connection_ptr_t& connection)
         : client_t(connection)
     {
     }
 
-    virtual ~receiver_iface_t() { }
+    virtual ~receiver_t() { }
 
     // blocks till data is received or broker stops responding to requests
     void recv(std::vector<std::string>&);
@@ -73,11 +73,11 @@ private:
     virtual void recv(data_container_t&) = 0;
 };
 
-typedef boost::shared_ptr<receiver_iface_t> receiver_ptr_t;
+typedef boost::shared_ptr<receiver_t> receiver_ptr_t;
 
 
 // asynchronous interface for data receiving tasks
-class async_receiver_iface_t : public client_t {
+class async_receiver_t : public client_t {
 public:
     // asynchronous callback
     class handler_t {
@@ -91,17 +91,17 @@ public:
 
     typedef boost::shared_ptr<handler_t> handler_ptr_t;
 
-    explicit async_receiver_iface_t(connection_ptr_t connection)
+    explicit async_receiver_t(connection_ptr_t connection)
         : client_t(connection)
     {
     }
 
-    virtual ~async_receiver_iface_t() { }
+    virtual ~async_receiver_t() { }
 
     // set async events callback
     virtual void set_handler(const handler_ptr_t& handler) = 0;
 };
 
-typedef boost::shared_ptr<async_receiver_iface_t> async_receiver_ptr_t;
+typedef boost::shared_ptr<async_receiver_t> async_receiver_ptr_t;
 
 #endif // CLIENT_HPP

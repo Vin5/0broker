@@ -48,17 +48,17 @@ template<class Client>
 struct client_creation_policy;
 
 template<>
-struct client_creation_policy<sender_iface_t> {
+struct client_creation_policy<sender_t> {
     static sender_ptr_t create(const connection_ptr_t& connection, const std::string& service);
 };
 
 template<>
-struct client_creation_policy<receiver_iface_t> {
+struct client_creation_policy<receiver_t> {
     static receiver_ptr_t create(const connection_ptr_t& connection, const std::string& service);
 };
 
 template<>
-struct client_creation_policy<async_receiver_iface_t> {
+struct client_creation_policy<async_receiver_t> {
     static async_receiver_ptr_t create(const connection_ptr_t& connection, const std::string& service);
 };
 

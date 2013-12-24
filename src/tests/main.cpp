@@ -7,13 +7,13 @@
 void client_code() {
     try {
         connection_ptr_t connection = connection_t::create("tcp://localhost:5555");
-        sender_ptr_t sender = connection->get<sender_iface_t>("randevouz");
+        sender_ptr_t sender = connection->get<sender_t>("randevouz");
         data_list_t sdata;
         sdata.push_back("Hello ");
         sdata.push_back("World!");
         sender->send(sdata);
 
-        receiver_ptr_t receiver = connection->get<receiver_iface_t>("randevouz");
+        receiver_ptr_t receiver = connection->get<receiver_t>("randevouz");
         data_list_t data;
         receiver->recv(data);
         for(unsigned int i = 0; i < data.size(); i++) {
@@ -27,7 +27,7 @@ void client_code() {
 
 
 
-class async_handler_t : public async_receiver_iface_t::handler_t {
+class async_handler_t : public async_receiver_t::handler_t {
 public:
     async_handler_t()
     {
@@ -41,7 +41,7 @@ public:
         }
     }
     void on_disconnect() {
-        std::cout << "Broker is not connected" << std::endl;
+        std::cout << "disconnect" << std::endl;
     }
     int count;
 };
@@ -49,15 +49,15 @@ public:
 void client_code2() {
     try {
         connection_ptr_t connection = connection_t::create("tcp://localhost:5555");
-        sender_ptr_t sender = connection->get<sender_iface_t>("randevouz");
+        sender_ptr_t sender = connection->get<sender_t>("randevouz");
         for(int i = 0; i < 5; i++) {
             data_list_t sdata;
             sdata.push_back("Hello World!");
             sender->send(sdata);
         }
 
-        async_receiver_ptr_t receiver = connection->get<async_receiver_iface_t>("randevouz");
-        async_receiver_iface_t::handler_ptr_t handler(new async_handler_t);
+        async_receiver_ptr_t receiver = connection->get<async_receiver_t>("randevouz");
+        async_receiver_t::handler_ptr_t handler(new async_handler_t);
         receiver->set_handler(handler);
 
         sleep(2);

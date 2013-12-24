@@ -9,7 +9,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 // sender interface implementation
-class sender_impl_t : public sender_iface_t {
+class sender_impl_t : public sender_t {
 public:
     sender_impl_t(const connection_ptr_t& connection, const std::string& service);
 
@@ -21,7 +21,7 @@ private:
 };
 
 // blocking receiver interface implementation
-class receiver_impl_t : public receiver_iface_t {
+class receiver_impl_t : public receiver_t {
 public:
     receiver_impl_t(const connection_ptr_t& connection, const std::string& service);
 
@@ -33,7 +33,7 @@ private:
 };
 
 // asynchronous receiver interface implementation
-class async_receiver_impl_t : public async_receiver_iface_t {
+class async_receiver_impl_t : public async_receiver_t {
 public:
     ~async_receiver_impl_t();
     async_receiver_impl_t(const connection_ptr_t& connection, const std::string& service);
