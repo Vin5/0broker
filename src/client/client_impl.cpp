@@ -7,8 +7,6 @@
 #include <auto_ptr.h>
 #include <sys/time.h>
 
-
-
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 
@@ -17,7 +15,7 @@ sender_impl_t::sender_impl_t(const connection_ptr_t& connection, const std::stri
       m_service(service)
 {
     m_socket = create_socket(ZMQ_DEALER, generate_uuid());
-    m_socket->connect(m_connection->address().c_str());
+    m_socket->connect(address().c_str());
 }
 
 void sender_impl_t::send(data_container_t& data) {
@@ -57,7 +55,7 @@ receiver_impl_t::receiver_impl_t(const connection_ptr_t& connection, const std::
       m_service(service)
 {
     m_socket = create_socket(ZMQ_DEALER, generate_uuid());
-    m_socket->connect(m_connection->address().c_str());
+    m_socket->connect(address().c_str());
 }
 
 // returns current time in milliseconds since epoch
@@ -162,7 +160,7 @@ void async_receiver_impl_t::set_handler(const async_receiver_iface_t::handler_pt
 void async_receiver_impl_t::background_receiver() {
     // connect to broker
     boost::shared_ptr<zmq::socket_t> socket = create_socket(ZMQ_DEALER, generate_uuid());
-    socket->connect(m_connection->address().c_str());
+    socket->connect(address().c_str());
 
     // connect to thread manager
     boost::shared_ptr<zmq::socket_t> controller = create_socket(ZMQ_PAIR);
@@ -194,6 +192,7 @@ void async_receiver_impl_t::background_receiver() {
 
             send(*controller, "ok");
             stopped = true;
+            m_handler->on_disconnect();
         }
         if(item[1].revents & ZMQ_POLLIN) {
 

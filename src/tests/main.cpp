@@ -41,7 +41,7 @@ public:
         }
     }
     void on_disconnect() {
-
+        std::cout << "Broker is not connected" << std::endl;
     }
     int count;
 };

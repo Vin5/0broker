@@ -25,6 +25,10 @@ void receiver_iface_t::recv(std::vector<std::string>& data) {
 }
 
 
+const std::string &client_t::address() const {
+    return m_connection->address();
+}
+
 boost::shared_ptr<zmq::socket_t> client_t::create_socket(int type) {
     return m_connection->create_socket(type);
 }
