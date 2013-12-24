@@ -35,7 +35,7 @@ bool socket_t::send(message_pack_t &msg, int flags) {
     size_t i = 0;
     while((msg_size - i) != 1) {
         message_part_t& part = msg[i++];
-        if(send(*part, ZMQ_SNDMORE | flags))
+        if(!send(*part, ZMQ_SNDMORE | flags))
             return false;
     }
     message_part_t& part = msg[i];
