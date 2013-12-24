@@ -28,10 +28,10 @@ protected:
     // broker address
     const std::string& address() const;
 
-    // create socket of specified type
+    // create socket with specified type
     boost::shared_ptr<zmq::socket_t> create_socket(int type);
 
-    // create socket of specified type and identity
+    // create socket with specified type and identity
     boost::shared_ptr<zmq::socket_t> create_socket(int type, const std::string& identity);
 
     // generate unique string identifier
