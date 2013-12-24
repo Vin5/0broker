@@ -8,6 +8,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+// sender interface implementation
 class sender_impl_t : public sender_iface_t {
 public:
     sender_impl_t(const connection_ptr_t& connection, const std::string& service);
@@ -19,6 +20,7 @@ private:
     boost::shared_ptr<zmq::socket_t> m_socket;
 };
 
+// blocking receiver interface implementation
 class receiver_impl_t : public receiver_iface_t {
 public:
     receiver_impl_t(const connection_ptr_t& connection, const std::string& service);
@@ -30,6 +32,7 @@ private:
     boost::shared_ptr<zmq::socket_t> m_socket;
 };
 
+// asynchronous receiver interface implementation
 class async_receiver_impl_t : public async_receiver_iface_t {
 public:
     ~async_receiver_impl_t();

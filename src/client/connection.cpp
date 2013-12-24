@@ -2,10 +2,6 @@
 
 #include <boost/make_shared.hpp>
 
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/random_generator.hpp>
-#include <boost/uuid/uuid_io.hpp>
-
 #include "data_container.hpp"
 #include "client_impl.hpp"
 

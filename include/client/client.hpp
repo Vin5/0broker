@@ -18,13 +18,12 @@ namespace zmq {
 // common ancestor for every client
 // provides an api to connection specific methods
 class client_t {
-public:
+protected:
     explicit client_t(const connection_ptr_t& connection)
         : m_connection(connection)
     {
     }
 
-protected:
     // broker address
     const std::string& address() const;
 

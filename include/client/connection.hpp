@@ -11,14 +11,19 @@
 
 #include "client.hpp"
 
+// factory for broker's clients
 class connection_t : public boost::enable_shared_from_this<connection_t> {
 public:
 
+    // create connection object
     static connection_ptr_t create(const std::string& broker_address);
 
+    // create new client for specified message queue
+    // should be parametrized with client interfaces classes
     template<class Client>
     boost::shared_ptr<Client> get(const std::string& service);
 
+    // broker address
     const std::string& address() const;
 
 private:
@@ -44,17 +49,17 @@ struct client_creation_policy;
 
 template<>
 struct client_creation_policy<sender_iface_t> {
-    static sender_ptr_t create(const connection_ptr_t& connection, const std::string& name);
+    static sender_ptr_t create(const connection_ptr_t& connection, const std::string& service);
 };
 
 template<>
 struct client_creation_policy<receiver_iface_t> {
-    static receiver_ptr_t create(const connection_ptr_t& connection, const std::string& name);
+    static receiver_ptr_t create(const connection_ptr_t& connection, const std::string& service);
 };
 
 template<>
 struct client_creation_policy<async_receiver_iface_t> {
-    static async_receiver_ptr_t create(const connection_ptr_t& connection, const std::string& name);
+    static async_receiver_ptr_t create(const connection_ptr_t& connection, const std::string& service);
 };
 
 template<class Client>
