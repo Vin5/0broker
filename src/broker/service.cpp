@@ -2,7 +2,8 @@
 #include "recipient.hpp"
 #include "socket.hpp"
 #include "codes.hpp"
-#include <iostream>
+//#include <iostream>
+
 namespace zbroker {
 
 void service_t::attach_waiter(const recipient_ptr_t &waiter) {
@@ -12,7 +13,7 @@ void service_t::attach_waiter(const recipient_ptr_t &waiter) {
 
 void service_t::append_message(message_pack_t && msg) {
     messages.push_back(std::move(msg));
-    std::cout << "messages size: " << messages.size() << std::endl;
+    //std::cout << "messages size: " << messages.size() << std::endl;
 }
 
 void service_t::dispatch(const socket_ptr_t &backend) {
@@ -33,7 +34,7 @@ void service_t::dispatch(const socket_ptr_t &backend) {
 }
 
 void service_t::send_message(const socket_ptr_t &backend, const recipient_ptr_t &recipient, message_pack_t &msg) {
-    std::cout << "Message sent to: " << recipient->identity() << std::endl;
+    //std::cout << "Message sent to: " << recipient->identity() << std::endl;
     backend->send(recipient->identity(), ZMQ_SNDMORE);
     backend->send("", ZMQ_SNDMORE);
     backend->send(codes::control::broker::data, ZMQ_SNDMORE);
