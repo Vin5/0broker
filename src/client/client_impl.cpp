@@ -5,10 +5,12 @@
 #include "connection.hpp"
 
 #include <auto_ptr.h>
-#include <sys/time.h>
 
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
+
+#define  BOOST_CHRONO_HEADER_ONLY
+#include <boost/chrono/chrono_io.hpp>
 
 sender_impl_t::sender_impl_t(const connection_ptr_t& connection, const std::string &service)
     : sender_t(connection),
@@ -58,11 +60,15 @@ receiver_impl_t::receiver_impl_t(const connection_ptr_t& connection, const std::
     m_socket->connect(address().c_str());
 }
 
+typedef boost::chrono::system_clock::time_point system_time_t;
+
 // returns current time in milliseconds since epoch
-static int64_t current_time() {
-    struct timeval current_time;
+static system_time_t current_time() {
+    /*struct timeval current_time;
     ::gettimeofday(&current_time, NULL);
-    return static_cast<int64_t>(current_time.tv_sec * 1000) + static_cast<int64_t>(current_time.tv_usec / 1000);
+    return static_cast<int64_t>(current_time.tv_sec * 1000) + static_cast<int64_t>(current_time.tv_usec / 1000);*/
+
+    return boost::chrono::system_clock::now();
 }
 
 static void send(zmq::socket_t& socket, const std::string& data, int options = 0) {
@@ -84,8 +90,8 @@ void receiver_impl_t::recv(data_container_t & data) {
     send_receiver_is_ready(*m_socket, m_service);
 
     int liveness = 3;
-    int interval = 2500;
-    int64_t heartbeat_at = current_time() + interval;
+    boost::chrono::milliseconds heartbeat_interval(2500);
+    system_time_t previous_hearbeat = current_time();
     while(liveness) {
         zmq::pollitem_t item[] = {
             {*m_socket, 0, ZMQ_POLLIN, 0}
@@ -121,11 +127,11 @@ void receiver_impl_t::recv(data_container_t & data) {
             send_receiver_is_ready(*m_socket, m_service);
             liveness--;
         }
-        if(current_time() > heartbeat_at) {
+        if(current_time() - previous_hearbeat > heartbeat_interval) {
             send(*m_socket, std::string(), ZMQ_SNDMORE);
             send(*m_socket, zbroker::codes::header::receiver, ZMQ_SNDMORE);
             send(*m_socket, zbroker::codes::control::receiver::heartbeat);;
-            heartbeat_at = current_time() + interval;
+            previous_hearbeat = current_time();
         }
     }
 }
@@ -169,8 +175,8 @@ void async_receiver_impl_t::background_receiver() {
 
 
     int liveness = 3;
-    int interval = 2500;
-    int64_t heartbeat_at = current_time() + interval;
+    boost::chrono::milliseconds heartbeat_interval(2500);
+    system_time_t previous_hearbeat = current_time();
     bool stopped = false;
 
     while(liveness && !stopped) {
@@ -226,11 +232,11 @@ void async_receiver_impl_t::background_receiver() {
             send_receiver_is_ready(*socket, m_service);
             liveness--;
         }
-        if(current_time() > heartbeat_at && !stopped) {
+        if(current_time() - previous_hearbeat > heartbeat_interval && !stopped) {
             send(*socket, std::string(), ZMQ_SNDMORE);
             send(*socket, zbroker::codes::header::receiver, ZMQ_SNDMORE);
             send(*socket, zbroker::codes::control::receiver::heartbeat);
-            heartbeat_at = current_time() + interval;
+            previous_hearbeat = current_time();
         }
     }
 }

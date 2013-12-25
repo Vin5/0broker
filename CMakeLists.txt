@@ -19,7 +19,8 @@ find_package(ZeroMQ REQUIRED)
 find_package(Boost 1.42.0 REQUIRED
             COMPONENTS
                 program_options
-                thread)
+                thread
+                system)
 
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${ZeroMQ_INCLUDE_DIRS})
