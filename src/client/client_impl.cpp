@@ -89,15 +89,15 @@ static void send_receiver_is_ready(zmq::socket_t& socket, const std::string& des
 void receiver_impl_t::recv(data_container_t & data) {
     send_receiver_is_ready(*m_socket, m_service);
 
-    int liveness = 3;
-    boost::chrono::milliseconds heartbeat_interval(2500);
+    int liveness = retries_count();
+    boost::chrono::milliseconds heartbeat_interval(timeout());
     system_time_t previous_hearbeat = current_time();
     while(liveness) {
         zmq::pollitem_t item[] = {
             {*m_socket, 0, ZMQ_POLLIN, 0}
         };
 
-        zmq::poll(item, 1, 2500);
+        zmq::poll(item, 1, timeout());
         if(item[0].revents & ZMQ_POLLIN) {
 
             liveness = 3;
@@ -174,8 +174,8 @@ void async_receiver_impl_t::background_receiver() {
 
 
 
-    int liveness = 3;
-    boost::chrono::milliseconds heartbeat_interval(2500);
+    int liveness = retries_count();
+    boost::chrono::milliseconds heartbeat_interval(timeout());
     system_time_t previous_hearbeat = current_time();
     bool stopped = false;
 
@@ -188,7 +188,7 @@ void async_receiver_impl_t::background_receiver() {
             {*socket, 0, ZMQ_POLLIN, 0}
         };
 
-        zmq::poll(item, 2, 2500);
+        zmq::poll(item, 2, timeout());
         if(item[0].revents & ZMQ_POLLIN) {
             zmq::message_t control_msg;
             controller->recv(&control_msg);

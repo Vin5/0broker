@@ -18,9 +18,20 @@ namespace zmq {
 // common ancestor for every client
 // provides an api to connection specific methods
 class client_t {
+public:
+    // broker's response waiting time
+    void set_timeout(unsigned int milliseconds);
+    unsigned int timeout() const;
+
+    // connection to broker is considered lost after 'retries' unresponsive requests
+    void set_retries_count(unsigned int retries);
+    unsigned int retries_count() const;
+
 protected:
     explicit client_t(const connection_ptr_t& connection)
-        : m_connection(connection)
+        : m_connection(connection),
+          m_timeout(2500),
+          m_retries(3)
     {
     }
 
@@ -38,6 +49,9 @@ protected:
 
 private:
     connection_ptr_t m_connection;
+
+    unsigned int m_timeout;
+    unsigned int m_retries;
 };
 
 // interface for data sending tasks

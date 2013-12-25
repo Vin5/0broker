@@ -40,3 +40,20 @@ boost::shared_ptr<zmq::socket_t> client_t::create_socket(int type, const std::st
 std::string client_t::generate_uuid() {
     return to_string(boost::uuids::random_generator()());
 }
+
+
+void client_t::set_timeout(unsigned int milliseconds) {
+    m_timeout = milliseconds;
+}
+
+void client_t::set_retries_count(unsigned int retries) {
+    m_retries = retries;
+}
+
+unsigned int client_t::timeout() const {
+    return m_timeout;
+}
+
+unsigned int client_t::retries_count() const {
+    return m_retries;
+}
