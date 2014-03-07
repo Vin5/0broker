@@ -51,10 +51,10 @@ struct log_message_t {
         return m_level;
     }
 
-
 private:
 
-    const char* prefix();
+    static std::string level_to_str(log_level_e level);
+    static std::string timestamp();
 
     log_level_e m_level;
     logger_t& m_logger;
@@ -63,17 +63,31 @@ private:
 
 // log to stdout
 class console_logger_t : public logger_t {
+public:
     void log(const log_message_t& msg);
 };
 
 // dummy
 class file_logger_t : public logger_t {
-    void log(const log_message_t& msg) {}
+public:
+    file_logger_t(const std::string& filename);
+
+    void log(const log_message_t& msg);
+
+private:
+
+    std::string m_filename;
 };
 
 // dummy
 class syslog_logger_t : public logger_t {
-    void log(const log_message_t& msg) {}
+public:
+    syslog_logger_t(const std::string& identity);
+    ~syslog_logger_t();
+
+    void log(const log_message_t& msg);
+private:
+
 };
 
 // no logging

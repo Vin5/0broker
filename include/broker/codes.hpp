@@ -37,8 +37,10 @@ namespace zbroker {
 namespace codes {
 
     namespace header {
-        static const char* const sender =   "001";
-        static const char* const receiver = "002";
+        static const char* const sender     = "001";
+        static const char* const receiver   = "002";
+        static const char* const publisher  = "003";
+        static const char* const subscriber = "004";
     } // header
 
     namespace control {

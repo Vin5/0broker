@@ -29,10 +29,10 @@ void context_t::setup_logger() {
         m_logger.reset(new console_logger_t);
         break;
     case LT_FILE:
-        m_logger.reset(new file_logger_t);
+        m_logger.reset(new file_logger_t(m_config->log_filename()));
         break;
     case LT_SYSLOG:
-        m_logger.reset(new syslog_logger_t);
+        m_logger.reset(new syslog_logger_t(m_config->log_identity()));
         break;
     case LT_EMPTY:
         m_logger.reset(new empty_logger_t);
