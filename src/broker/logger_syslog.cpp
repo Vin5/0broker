@@ -16,16 +16,16 @@ void syslog_logger_t::log(const log_message_t &msg) {
 
     switch(msg.level()) {
     case LL_DEBUG:
-        ::syslog(LOG_DEBUG, "%s %s", msg.timestamp().c_str(), msg.value().c_str());
+        ::syslog(LOG_DEBUG, "%s", msg.value().c_str());
         break;
     case LL_INFO:
-        ::syslog(LOG_INFO, "%s %s", msg.timestamp().c_str(), msg.value().c_str());
+        ::syslog(LOG_INFO, "%s", msg.value().c_str());
         break;
     case LL_WARNING:
-        ::syslog(LOG_WARNING, "%s %s", msg.timestamp().c_str(), msg.value().c_str());
+        ::syslog(LOG_WARNING, "%s", msg.value().c_str());
         break;
     case LL_ERROR:
-        ::syslog(LOG_ERR, "%s %s", msg.timestamp().c_str(), msg.value().c_str());
+        ::syslog(LOG_ERR, "%s", msg.value().c_str());
         break;
     }
 }
