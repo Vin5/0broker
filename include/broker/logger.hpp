@@ -89,12 +89,11 @@ public:
     ~syslog_logger_t();
 
     void log(const log_message_t& msg);
-private:
-
 };
 
 // no logging
 class empty_logger_t : public logger_t {
+public:
     void log(const log_message_t&) {
         // intentionally left empty
     }

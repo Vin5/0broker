@@ -13,7 +13,7 @@ public:
     config_t();
 
 
-    // address that server is bind to
+    // address that server is bound to
     const endpoint_t& address() const;
 
     logger_type_e logger_type() const;
