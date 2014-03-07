@@ -3,6 +3,8 @@
 #include <string>
 #include <iostream>
 
+#include <time.h>
+
 namespace zbroker {
 
 log_message_t::log_message_t(log_level_e lvl, logger_t &logger)
@@ -43,6 +45,16 @@ log_message_t::~log_message_t() {
 std::string log_message_t::level_to_str(log_level_e lvl) {
     static const char* str_level[] = {"INFO", "WARNING", "ERROR", "DEBUG"};
     return str_level[lvl];
+}
+
+std::string log_message_t::timestamp() {
+    struct tm local_time;
+    time_t current_time = time(nullptr);
+    localtime_r(&current_time, &local_time);
+    const unsigned int BUFF_SIZE = 100;
+    char buff[BUFF_SIZE];
+    strftime(buff, BUFF_SIZE, "%F %T", &local_time);
+    return buff;
 }
 
 void console_logger_t::log(const log_message_t &msg) {

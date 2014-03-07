@@ -16,7 +16,8 @@ struct file_logger_t::file_logger_impl_t {
     }
 
     void log(const log_message_t &msg) {
-        m_stream << "[" << log_message_t::level_to_str(msg.level()) << "] ";
+        m_stream << msg.timestamp();
+        m_stream << " [" << log_message_t::level_to_str(msg.level()) << "] ";
         m_stream << msg.value() << std::endl;
     }
 private:
