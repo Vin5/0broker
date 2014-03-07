@@ -4,6 +4,8 @@
 
 #include <sstream>
 
+#include <memory> // for std::unique_ptr
+
 namespace zbroker {
 
 enum logger_type_e {
@@ -51,11 +53,12 @@ struct log_message_t {
         return m_level;
     }
 
-private:
+
 
     static std::string level_to_str(log_level_e level);
     static std::string timestamp();
 
+private:
     log_level_e m_level;
     logger_t& m_logger;
     std::stringstream m_stream;
@@ -67,19 +70,19 @@ public:
     void log(const log_message_t& msg);
 };
 
-// dummy
 class file_logger_t : public logger_t {
 public:
     file_logger_t(const std::string& filename);
+    ~file_logger_t();
 
     void log(const log_message_t& msg);
 
 private:
 
-    std::string m_filename;
+    struct file_logger_impl_t;
+    std::unique_ptr<file_logger_impl_t> m_impl;
 };
 
-// dummy
 class syslog_logger_t : public logger_t {
 public:
     syslog_logger_t(const std::string& identity);

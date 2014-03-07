@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <csignal>
 #include <stdexcept>
+#include <iostream>
 
 struct signal_handler_t {
     signal_handler_t(zbroker::broker_t& broker) {
@@ -36,8 +37,9 @@ struct signal_handler_t {
 zbroker::broker_t* signal_handler_t::broker = nullptr;
 
 int main(int argc, char* argv[]) {
-    zbroker::context_ptr_t ctx(new zbroker::context_t);
+    zbroker::context_ptr_t ctx;
     try {
+        ctx.reset(new zbroker::context_t);
         zbroker::broker_t broker(ctx);
 
         signal_handler_t handler(broker);
@@ -46,7 +48,12 @@ int main(int argc, char* argv[]) {
         broker.run();
     }
     catch(const std::exception& e) {
-        ctx->log(zbroker::LL_ERROR) << e.what();
+        if(ctx) {
+            ctx->log(zbroker::LL_ERROR) << e.what();
+        }
+        else {
+            std::cerr << e.what();
+        }
         return EXIT_FAILURE;
     }
 
